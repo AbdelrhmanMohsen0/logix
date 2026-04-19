@@ -1,0 +1,112 @@
+services:
+  # AUTH SERVICE POSTGRES DATABASE
+  auth-db:
+    image: postgres:latest
+    container_name: auth-db
+    environment:
+      POSTGRES_DB: ${AUTH_DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth_data:/var/lib/postgresql
+
+  # AUTH SERVICE
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    depends_on:
+      - auth-db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/${AUTH_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      SERVER_PORT: 8081
+
+  # ORDER SERVICE POSTGRES DATABASE
+  order-db:
+    image: postgres:latest
+    container_name: order-db
+    environment:
+      POSTGRES_DB: ${ORDER_DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - order_data:/var/lib/postgresql
+
+  # ORDER SERVICE
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    depends_on:
+      - order-db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://order-db:5432/${ORDER_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      SERVER_PORT: 8082
+
+
+  # INVENTORY SERVICE POSTGRES DATABASE
+  inventory-db:
+    image: postgres:latest
+    container_name: inventory-db
+    environment:
+      POSTGRES_DB: ${INVENTORY_DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5434:5432"
+    volumes:
+      - inventory_data:/var/lib/postgresql
+
+  # INVENTORY SERVICE
+  inventory-service:
+    build: ./inventory-service
+    container_name: inventory-service
+    depends_on:
+      - inventory-db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://inventory-db:5432/${INVENTORY_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      SERVER_PORT: 8083
+
+
+  # WAREHOUSE SERVICE POSTGRES DATABASE
+  warehouse-db:
+    image: postgres:latest
+    container_name: warehouse-db
+    environment:
+      POSTGRES_DB: ${WAREHOUSE_DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5435:5432"
+    volumes:
+      - warehouse_data:/var/lib/postgresql
+
+  # WAREHOUSE SERVICE
+  warehouse-service:
+    build: ./warehouse-service
+    container_name: warehouse-service
+    depends_on:
+      - warehouse-db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://warehouse-db:5432/${WAREHOUSE_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      SERVER_PORT: 8084
+
+volumes:
+  auth_data:
+  order_data:
+  inventory_data:
+  warehouse_data:
