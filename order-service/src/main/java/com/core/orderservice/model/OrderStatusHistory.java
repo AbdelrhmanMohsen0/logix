@@ -1,41 +1,37 @@
 package com.core.orderservice.model;
 
-import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.UUID;
+import com.core.orderservice.domain.OrderStatus;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Getter
 @Setter
-public class Item {
-	
+public class OrderStatusHistory {
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	private UUID id;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "order_id", foreignKey = @ForeignKey(name = "fk_item_order"))
+	@JoinColumn(name = "order_id")
 	private Order order;
 	
-	@NotNull
-	private String SKU;
+	@Enumerated(EnumType.STRING)
+	private OrderStatus status;
 	
-	@NotNull
-	private String name;
+	@CreationTimestamp // Automatically sets the date when the record is created
+	private Instant transitionedAt;
 	
-	@NotNull
-	private Long quantity = 1L;
-	
-	@NotNull
-	private BigDecimal priceAtPurchase;
 }
