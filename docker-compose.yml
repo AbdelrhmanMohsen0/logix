@@ -23,8 +23,10 @@ services:
       SPRING_DATASOURCE_USERNAME: ${DB_USER}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      PASSWORD_ENCODING_PEPPER: ${PASSWORD_ENCODING_PEPPER}
       SERVER_PORT: 8081
-
+    ports:
+      - "8081:8081"
   # ORDER SERVICE POSTGRES DATABASE
   order-db:
     image: postgres:latest
@@ -50,6 +52,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       SERVER_PORT: 8082
+    ports:
+      - "8082:8082"
 
 
   # INVENTORY SERVICE POSTGRES DATABASE
@@ -77,6 +81,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       SERVER_PORT: 8083
+    ports:
+      - "8083:8083"
 
 
   # WAREHOUSE SERVICE POSTGRES DATABASE
@@ -104,6 +110,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       SERVER_PORT: 8084
+    ports:
+      - "8084:8084"
 
 volumes:
   auth_data:

@@ -2,13 +2,13 @@ package com.core.authservice.security;
 
 import com.core.authservice.repository.UserRepository;
 import com.core.authservice.domain.User;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class JpaUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
