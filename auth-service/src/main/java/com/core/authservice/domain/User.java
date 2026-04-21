@@ -19,8 +19,9 @@ public class User {
     @Id @GeneratedValue(strategy= GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false)
-    private UUID organizationId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id", nullable = false)
+    private Organization organization;
 
     @Column(nullable = false, unique = true)
     private String email;

@@ -40,9 +40,9 @@ public class AuthService {
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("auth-service")
                 .issuedAt(now)
-                .expiresAt(now.plus(15, ChronoUnit.MINUTES))
+                .expiresAt(now.plus(24, ChronoUnit.HOURS))
                 .subject(securityUser.user().getId().toString())
-                .claim("org", securityUser.user().getOrganizationId())
+                .claim("org", securityUser.user().getOrganization().getId())
                 .claim("roles", roles)
                 .build();
 
