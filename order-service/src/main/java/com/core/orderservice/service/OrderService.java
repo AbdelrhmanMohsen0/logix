@@ -1,5 +1,6 @@
 package com.core.orderservice.service;
 
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -7,6 +8,7 @@ import com.core.orderservice.domain.OrderStatus;
 import com.core.orderservice.dto.ItemDTO;
 import com.core.orderservice.dto.OrderDTO;
 import com.core.orderservice.dto.OrderRequest;
+import com.core.orderservice.dto.OrderSummaryDTO;
 import com.core.orderservice.dto.StatusHistoryDTO;
 import com.core.orderservice.exception.OrderNotFoundException;
 import com.core.orderservice.model.Item;
@@ -25,8 +27,9 @@ public class OrderService {
 	private final OrderRepo orderRepo;
 	
 	@Transactional
-	public OrderDTO createOrder(OrderRequest request) {
+	public OrderDTO createOrder(OrderRequest request, UUID organizationId) {
 		Order order = new Order();
+		order.setOrganizationId(organizationId);
 		order.setCustomerName(request.customerName());
 		order.setCustomerPhone(request.customerPhone());
 		order.setCustomerAddress(request.customerAddress());
@@ -43,6 +46,7 @@ public class OrderService {
 		
 		OrderStatusHistory statusHistory = new OrderStatusHistory();
 		statusHistory.setStatus(OrderStatus.CREATED);
+		statusHistory.setTransitionedAt(Instant.now());
 		order.addStatusHistory(statusHistory);
 		
 		Order savedOrder = orderRepo.save(order);
@@ -50,19 +54,37 @@ public class OrderService {
 	}
 	
 	@Transactional
-	public void changeStatus(UUID orderId,@Valid OrderStatus nextStatus) {
-		Order order = orderRepo.findById(orderId)
-				.orElseThrow(() -> new OrderNotFoundException(orderId));
+	public OrderDTO changeStatus(UUID orgId,UUID orderId,@Valid OrderStatus nextStatus) {
+		Order order;
+		try {
+			order = orderRepo.getOrderByOrganizationIdAndOrderId(orgId, orderId);
+		} catch (OrderNotFoundException e) {
+			throw new OrderNotFoundException(orderId);
+		}
 	
 		order.updateStatus(nextStatus);
 		
-		orderRepo.save(order);
+		return toDetailDTO(orderRepo.save(order));
 	}
 	
+	public List<OrderSummaryDTO> getOrdersSummary(UUID organizationId) {
+		return orderRepo.findAllSummariesByOrg(organizationId);
+	}
+	
+	public OrderDTO getOrder(UUID orgId, UUID orderId) {
+		Order order;
+		try {
+			order = orderRepo.getOrderByOrganizationIdAndOrderId(orgId, orderId);
+		} catch (OrderNotFoundException e) {
+			throw new OrderNotFoundException(orderId);
+		}
+		
+		return toDetailDTO(order);
+	}
 	private OrderDTO toDetailDTO(Order order) {
 		// 1. Map and Sort Status History for the Timeline
 		List<StatusHistoryDTO> historyDTOs = order.getStatusHistory().stream()
-				.sorted(Comparator.comparing(OrderStatusHistory::getTransitionedAt))
+				.sorted(Comparator.comparing(OrderStatusHistory::getTransitionedAt, Comparator.nullsLast(Instant::compareTo)))
 				.map(h -> new StatusHistoryDTO(h.getStatus(), h.getTransitionedAt()))
 				.toList();
 
