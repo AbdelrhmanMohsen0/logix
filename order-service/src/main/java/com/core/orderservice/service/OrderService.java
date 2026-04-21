@@ -7,6 +7,7 @@ import com.core.orderservice.domain.OrderStatus;
 import com.core.orderservice.dto.ItemDTO;
 import com.core.orderservice.dto.OrderDTO;
 import com.core.orderservice.dto.OrderRequest;
+import com.core.orderservice.dto.OrderSummaryDTO;
 import com.core.orderservice.dto.StatusHistoryDTO;
 import com.core.orderservice.exception.OrderNotFoundException;
 import com.core.orderservice.model.Item;
@@ -15,6 +16,8 @@ import com.core.orderservice.model.OrderStatusHistory;
 import com.core.orderservice.repository.OrderRepo;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,8 +28,9 @@ public class OrderService {
 	private final OrderRepo orderRepo;
 	
 	@Transactional
-	public OrderDTO createOrder(OrderRequest request) {
+	public OrderDTO createOrder(OrderRequest request, UUID organizationId) {
 		Order order = new Order();
+		order.setOrganizationId(organizationId);
 		order.setCustomerName(request.customerName());
 		order.setCustomerPhone(request.customerPhone());
 		order.setCustomerAddress(request.customerAddress());
@@ -50,15 +54,33 @@ public class OrderService {
 	}
 	
 	@Transactional
-	public void changeStatus(UUID orderId,@Valid OrderStatus nextStatus) {
-		Order order = orderRepo.findById(orderId)
-				.orElseThrow(() -> new OrderNotFoundException(orderId));
+	public OrderDTO changeStatus(UUID orgId,UUID orderId,@Valid OrderStatus nextStatus) {
+		Order order;
+		try {
+			order = orderRepo.getOrderByOrganizationIdAndOrderId(orgId, orderId);
+		} catch (OrderNotFoundException e) {
+			throw new OrderNotFoundException(orderId);
+		}
 	
 		order.updateStatus(nextStatus);
 		
-		orderRepo.save(order);
+		return toDetailDTO(orderRepo.save(order));
 	}
 	
+	public Page<OrderSummaryDTO> getOrdersSummary(UUID organizationId, String search, Pageable pageable) {
+		return orderRepo.findAllSummariesByOrg(organizationId, search, pageable);
+	}
+	
+	public OrderDTO getOrder(UUID orgId, UUID orderId) {
+		Order order;
+		try {
+			order = orderRepo.getOrderByOrganizationIdAndOrderId(orgId, orderId);
+		} catch (OrderNotFoundException e) {
+			throw new OrderNotFoundException(orderId);
+		}
+		
+		return toDetailDTO(order);
+	}
 	private OrderDTO toDetailDTO(Order order) {
 		// 1. Map and Sort Status History for the Timeline
 		List<StatusHistoryDTO> historyDTOs = order.getStatusHistory().stream()

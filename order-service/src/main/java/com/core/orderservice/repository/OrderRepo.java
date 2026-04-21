@@ -1,8 +1,15 @@
 package com.core.orderservice.repository;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import com.core.orderservice.dto.OrderDTO;
+import com.core.orderservice.dto.OrderSummaryDTO;
+import com.core.orderservice.exception.OrderNotFoundException;
 import com.core.orderservice.model.Order;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,4 +19,23 @@ public interface OrderRepo extends JpaRepository<Order, UUID> {
 	// This handles N+1 problem
 	@Query("SELECT o FROM Order o LEFT JOIN FETCH o.items WHERE o.id = :id")
 	Optional<Order> findByIdWithItems(@Param("id") UUID id);
+	
+	@Query("SELECT new com.core.orderservice.dto.OrderSummaryDTO(" +
+			"o.id, o.customerName, MIN(h.transitionedAt), o.currentStatus, o.totalAmount) " +
+			"FROM Order o " +
+			"JOIN o.statusHistory h " + // Join to get the dates
+			"WHERE o.organizationId = :orgId " + // Security/Org filter
+			"AND (:search IS NULL OR " +
+			"    LOWER(o.customerName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+			"    LOWER(CAST(o.id AS string)) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+			"    LOWER(o.currentStatus) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+			"GROUP BY o.id, o.customerName, o.currentStatus, o.totalAmount")
+	Page<OrderSummaryDTO> findAllSummariesByOrg(
+			@Param("orgId") UUID orgId,
+			@Param("search") String search,
+			Pageable pageable
+	);
+	
+	@Query("SELECT o FROM Order o LEFT JOIN FETCH o.items WHERE o.id = :id and o.organizationId = :orgId")
+	Order getOrderByOrganizationIdAndOrderId (UUID orgId, UUID id) throws OrderNotFoundException;
 }
