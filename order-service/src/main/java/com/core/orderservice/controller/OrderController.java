@@ -1,5 +1,6 @@
 package com.core.orderservice.controller;
 
+import java.util.List;
 import java.util.UUID;
 import com.core.orderservice.domain.OrderStatus;
 import com.core.orderservice.dto.OrderDTO;
@@ -35,11 +36,8 @@ public class OrderController {
 	}
 	
 	@GetMapping("/")
-	public Page<OrderSummaryDTO> getOrdersSummary(@RequestHeader("X-Organization-ID") UUID organizationId,
-			@PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
-			Pageable pageable,
-			@RequestParam(required = false) String search) {
-		return orderService.getOrdersSummary(organizationId, search, pageable);
+	public List<OrderSummaryDTO> getOrdersSummary(@RequestHeader("X-Organization-ID") UUID organizationId){
+		return orderService.getOrdersSummary(organizationId);
 	}
 	
 	@GetMapping("/{id}")

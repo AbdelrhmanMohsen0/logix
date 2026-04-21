@@ -1,5 +1,6 @@
 package com.core.orderservice.service;
 
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -16,8 +17,6 @@ import com.core.orderservice.model.OrderStatusHistory;
 import com.core.orderservice.repository.OrderRepo;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +46,7 @@ public class OrderService {
 		
 		OrderStatusHistory statusHistory = new OrderStatusHistory();
 		statusHistory.setStatus(OrderStatus.CREATED);
+		statusHistory.setTransitionedAt(Instant.now());
 		order.addStatusHistory(statusHistory);
 		
 		Order savedOrder = orderRepo.save(order);
@@ -67,8 +67,8 @@ public class OrderService {
 		return toDetailDTO(orderRepo.save(order));
 	}
 	
-	public Page<OrderSummaryDTO> getOrdersSummary(UUID organizationId, String search, Pageable pageable) {
-		return orderRepo.findAllSummariesByOrg(organizationId, search, pageable);
+	public List<OrderSummaryDTO> getOrdersSummary(UUID organizationId) {
+		return orderRepo.findAllSummariesByOrg(organizationId);
 	}
 	
 	public OrderDTO getOrder(UUID orgId, UUID orderId) {
@@ -84,7 +84,7 @@ public class OrderService {
 	private OrderDTO toDetailDTO(Order order) {
 		// 1. Map and Sort Status History for the Timeline
 		List<StatusHistoryDTO> historyDTOs = order.getStatusHistory().stream()
-				.sorted(Comparator.comparing(OrderStatusHistory::getTransitionedAt))
+				.sorted(Comparator.comparing(OrderStatusHistory::getTransitionedAt, Comparator.nullsLast(Instant::compareTo)))
 				.map(h -> new StatusHistoryDTO(h.getStatus(), h.getTransitionedAt()))
 				.toList();
 

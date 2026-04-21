@@ -25,16 +25,8 @@ public interface OrderRepo extends JpaRepository<Order, UUID> {
 			"FROM Order o " +
 			"JOIN o.statusHistory h " + // Join to get the dates
 			"WHERE o.organizationId = :orgId " + // Security/Org filter
-			"AND (:search IS NULL OR " +
-			"    LOWER(o.customerName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-			"    LOWER(CAST(o.id AS string)) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-			"    LOWER(o.currentStatus) LIKE LOWER(CONCAT('%', :search, '%'))) " +
 			"GROUP BY o.id, o.customerName, o.currentStatus, o.totalAmount")
-	Page<OrderSummaryDTO> findAllSummariesByOrg(
-			@Param("orgId") UUID orgId,
-			@Param("search") String search,
-			Pageable pageable
-	);
+	List<OrderSummaryDTO> findAllSummariesByOrg(@Param("orgId") UUID orgId);
 	
 	@Query("SELECT o FROM Order o LEFT JOIN FETCH o.items WHERE o.id = :id and o.organizationId = :orgId")
 	Order getOrderByOrganizationIdAndOrderId (UUID orgId, UUID id) throws OrderNotFoundException;
