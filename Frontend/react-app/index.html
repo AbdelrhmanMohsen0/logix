@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LogiX — Logistics Platform</title>
+    <meta
+      name="description"
+      content="LogiX cloud-native logistics platform. Manage orders, inventory, users and warehouses from a single dashboard."
+    />
+
+    <!-- Google Fonts – Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Material Symbols (icons) -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- App CSS -->
+    <link rel="stylesheet" href="css/styles.css" />
+
+    <!-- React 18 via CDN -->
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <!-- Load order matters: services → context → components → pages → app -->
+    <script src="js/services/api.js"></script>
+    <script src="js/context/AuthContext.js"></script>
+    <script src="js/components/ProtectedRoute.js"></script>
+    <script src="js/components/Navigation.js"></script>
+    <script src="js/components/Layout.js"></script>
+    <script src="js/pages/auth/LoginPage.js"></script>
+    <script src="js/pages/auth/SignupPage.js"></script>
+    <script src="js/pages/dashboard/DashboardPage.js"></script>
+    <script src="js/pages/users/UserListPage.js"></script>
+    <script src="js/pages/users/CreateUserPage.js"></script>
+    <script src="js/pages/users/EditUserPage.js"></script>
+    <script src="js/pages/orders/OrderListPage.js"></script>
+    <script src="js/pages/orders/CreateOrderPage.js"></script>
+    <script src="js/pages/orders/OrderDetailsPage.js"></script>
+    <script src="js/pages/inventory/InventoryManagementPage.js"></script>
+    <script src="js/pages/warehouse/InboundShipmentsPage.js"></script>
+    <script src="js/pages/warehouse/AddReceivedShipmentPage.js"></script>
+    <script src="js/pages/warehouse/PickingListPage.js"></script>
+    <script src="js/pages/warehouse/PickingListDetailsPage.js"></script>
+    <script src="js/pages/warehouse/PickingListManagementPage.js"></script>
+    <script src="js/pages/warehouse/ShipmentsManagementPage.js"></script>
+    <script src="js/pages/warehouse/CreateShipmentPage.js"></script>
+    <script src="js/pages/warehouse/WarehouseOperationsPage.js"></script>
+    <script src="js/pages/warehouse/WarehouseZoneManagementPage.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
