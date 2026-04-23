@@ -1,7 +1,7 @@
 import React from 'react';
 import { AuthAPI, UserAPI, OrderAPI, TokenService } from '../../services/api';
 
-function UserListPage({ onNavigate }) {
+function UserListPage({ searchQuery, onNavigate }) {
   const [users, setUsers] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
@@ -44,6 +44,16 @@ function UserListPage({ onNavigate }) {
       setDeleteId(null);
     }
   };
+
+  const filteredUsers = users.filter(u => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (u.name && u.name.toLowerCase().includes(q)) ||
+      (u.email && u.email.toLowerCase().includes(q))
+    );
+  });
+
   return (
     <div>
       <div className="page-header">
@@ -158,56 +168,64 @@ function UserListPage({ onNavigate }) {
               </tr>
             </thead>
             <tbody>
-              {users.map((u) =>
-                <tr key={u.id}>
-                  <td className="font-medium">
-                    {u.name}
+              {filteredUsers.length === 0 && users.length > 0 ? (
+                <tr>
+                  <td colSpan="4" style={{ textAlign: "center", padding: "2rem" }}>
+                    No users found for "{searchQuery}"
                   </td>
-                  <td>
-                    {u.email}
-                  </td>
-                  <td>
-                    <span className="status-badge confirmed">
-                      {roleLabel(u.role)}
-                    </span>
-                  </td>
-                  <td
-                    style={{
-                      textAlign: "right",
-                    }}>
-                    <button
-                      className="btn-ghost"
-                      style={{
-                        padding: "0.25rem",
-                      }}
-                      onClick={() => onNavigate("edit-user:" + u.id)}
-                      title="Edit user">
-                      <span
-                        className="material-symbols-outlined"
-                        style={{
-                          fontSize: "1.125rem",
-                        }}>
-                        edit
+                </tr>
+              ) : (
+                filteredUsers.map((u) =>
+                  <tr key={u.id}>
+                    <td className="font-medium">
+                      {u.name}
+                    </td>
+                    <td>
+                      {u.email}
+                    </td>
+                    <td>
+                      <span className="status-badge confirmed">
+                        {roleLabel(u.role)}
                       </span>
-                    </button>
-                    <button
-                      className="btn-ghost"
+                    </td>
+                    <td
                       style={{
-                        padding: "0.25rem",
-                        color: "var(--error)",
-                      }}
-                      onClick={() => setDeleteId(u.id)}
-                      title="Delete user">
-                      <span
-                        className="material-symbols-outlined"
+                        textAlign: "right",
+                      }}>
+                      <button
+                        className="btn-ghost"
                         style={{
-                          fontSize: "1.125rem",
-                        }}>
-                        delete
-                      </span>
-                    </button>
-                  </td>
-                </tr>,
+                          padding: "0.25rem",
+                        }}
+                        onClick={() => onNavigate("edit-user:" + u.id)}
+                        title="Edit user">
+                        <span
+                          className="material-symbols-outlined"
+                          style={{
+                            fontSize: "1.125rem",
+                          }}>
+                          edit
+                        </span>
+                      </button>
+                      <button
+                        className="btn-ghost"
+                        style={{
+                          padding: "0.25rem",
+                          color: "var(--error)",
+                        }}
+                        onClick={() => setDeleteId(u.id)}
+                        title="Delete user">
+                        <span
+                          className="material-symbols-outlined"
+                          style={{
+                            fontSize: "1.125rem",
+                          }}>
+                          delete
+                        </span>
+                      </button>
+                    </td>
+                  </tr>,
+                )
               )}
             </tbody>
           </table>

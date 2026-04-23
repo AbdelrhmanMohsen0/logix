@@ -1,8 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useInventory } from '../../context/InventoryContext';
 
-function DashboardPage({ onNavigate }) {
+function DashboardPage({ searchQuery, onNavigate }) {
   const { user } = useAuth();
+  const { items } = useInventory();
+  const lowStockItems = items.filter(i => i.qty < 50);
+  const [timeRange, setTimeRange] = useState("Last 30 Days");
+  const [hoveredBar, setHoveredBar] = useState(null);
+
+  const chartData = {
+    "Last 30 Days": {
+      data: [65, 85, 45, 95],
+      orders: [143, 187, 99, 210],
+      labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+      peakIndex: 3,
+    },
+    "This Quarter": {
+      data: [65, 45, 72, 58, 90, 78, 55, 82, 95, 68, 74, 88],
+      orders: [310, 215, 345, 278, 430, 374, 263, 392, 475, 325, 354, 421],
+      labels: ["Wk 1", "Wk 4", "Wk 8", "Wk 12"],
+      peakIndex: 8,
+    },
+    "This Year": {
+      data: [40, 30, 45, 50, 35, 60, 70, 55, 48, 52, 61, 85],
+      orders: [980, 735, 1102, 1225, 858, 1470, 1715, 1348, 1176, 1274, 1494, 2100],
+      labels: ["Jan", "Apr", "Jul", "Oct"],
+      peakIndex: 11,
+    }
+  };
+  const currentChart = chartData[timeRange];
   const kpis = [
     {
       label: "Total Orders",
@@ -33,8 +60,9 @@ function DashboardPage({ onNavigate }) {
       note: "stable",
     },
     {
+      id: "low_stock",
       label: "Low Stock Alerts",
-      value: "18",
+      value: lowStockItems.length.toString(),
       icon: "warning",
       iconClass: "error",
       valueClass: "error-text",
@@ -89,6 +117,18 @@ function DashboardPage({ onNavigate }) {
       pct: 10,
     },
   ];
+
+  const filteredActivity = recentActivity.filter(row => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      row.id.toLowerCase().includes(q) ||
+      row.status.toLowerCase().includes(q) ||
+      row.dest.toLowerCase().includes(q) ||
+      row.date.toLowerCase().includes(q)
+    );
+  });
+
   return (
     <div>
       <div className="page-header">
@@ -143,11 +183,19 @@ function DashboardPage({ onNavigate }) {
             <div className={`kpi-value${k.valueClass ? " " + k.valueClass : ""}`}>
               {k.value}
             </div>
+            {k.id === "low_stock" && lowStockItems.length > 0 && (
+              <div style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem' }}>
+                {lowStockItems.length} items
+              </div>
+            )}
             <div className="kpi-trend">
               {k.action
                 ? <a
                 href="#"
-                onClick={(e) => e.preventDefault()}
+                onClick={(e) => { 
+                  e.preventDefault(); 
+                  if(k.id === "low_stock") onNavigate("inventory:lowstock"); 
+                }}
                 style={{
                   fontSize: "0.75rem",
                   fontWeight: 500,
@@ -181,18 +229,20 @@ function DashboardPage({ onNavigate }) {
             </h3>
             <select
               className="form-input"
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
               style={{
                 width: "auto",
                 padding: "0.25rem 2rem 0.25rem 0.5rem",
                 fontSize: "0.75rem",
               }}>
-              <option>
+              <option value="Last 30 Days">
                 Last 30 Days
               </option>
-              <option>
+              <option value="This Quarter">
                 This Quarter
               </option>
-              <option>
+              <option value="This Year">
                 This Year
               </option>
             </select>
@@ -206,37 +256,45 @@ function DashboardPage({ onNavigate }) {
               gap: "0.25rem",
               paddingTop: "1rem",
             }}>
-            {[65, 45, 72, 58, 90, 78, 55, 82, 95, 68, 74, 88].map((h, i) =>
+            {currentChart.data.map((h, i) =>
               <div
                 key={i}
+                onMouseEnter={() => setHoveredBar(i)}
+                onMouseLeave={() => setHoveredBar(null)}
                 style={{
                   flex: 1,
                   height: `${h}%`,
                   background:
-                    i === 8
+                    hoveredBar === i
                       ? "linear-gradient(180deg, var(--primary) 0%, var(--primary-container) 100%)"
-                      : "var(--primary-fixed)",
+                      : i === currentChart.peakIndex
+                        ? "linear-gradient(180deg, var(--primary) 0%, var(--primary-container) 100%)"
+                        : "var(--primary-fixed)",
                   borderRadius: "var(--radius-sm) var(--radius-sm) 0 0",
-                  transition: "height 0.6s ease",
+                  transition: "height 0.6s ease, background 0.2s ease",
                   position: "relative",
-                }}
-                title={`Week ${i + 1}: ${Math.round(h * 5)} orders`}>
-                {i === 8 &&
+                  cursor: "pointer",
+                }}>
+                {hoveredBar === i && (
                   <div
                     style={{
                       position: "absolute",
-                      top: "-1.75rem",
+                      top: "-2rem",
                       left: "50%",
                       transform: "translateX(-50%)",
                       background: "var(--inverse-surface)",
                       color: "var(--inverse-on-surface)",
-                      fontSize: "0.625rem",
-                      padding: "0.125rem 0.375rem",
+                      fontSize: "0.6875rem",
+                      fontWeight: 600,
+                      padding: "0.2rem 0.5rem",
                       borderRadius: "var(--radius-sm)",
                       whiteSpace: "nowrap",
+                      pointerEvents: "none",
+                      zIndex: 10,
                     }}>
-                    Peak: 475
-                  </div>}
+                    {currentChart.orders[i]} orders
+                  </div>
+                )}
               </div>,
             )}
           </div>
@@ -248,18 +306,9 @@ function DashboardPage({ onNavigate }) {
               fontSize: "0.625rem",
               color: "var(--outline)",
             }}>
-            <span>
-              Week 1
-            </span>
-            <span>
-              Week 4
-            </span>
-            <span>
-              Week 8
-            </span>
-            <span>
-              Week 12
-            </span>
+            {currentChart.labels.map((lbl, i) => (
+              <span key={i}>{lbl}</span>
+            ))}
           </div>
         </div>
         <div className="card chart-card">
@@ -381,41 +430,49 @@ function DashboardPage({ onNavigate }) {
               </tr>
             </thead>
             <tbody>
-              {recentActivity.map((row, i) =>
-                <tr key={i}>
-                  <td className="font-medium">
-                    {row.id}
+              {filteredActivity.length === 0 ? (
+                <tr>
+                  <td colSpan="5" style={{ textAlign: "center", padding: "1rem" }}>
+                    No results found for "{searchQuery}"
                   </td>
-                  <td>
-                    <span className={`status-badge ${row.statusClass}`}>
-                      {row.status}
-                    </span>
-                  </td>
-                  <td>
-                    {row.dest}
-                  </td>
-                  <td>
-                    {row.date}
-                  </td>
-                  <td
-                    style={{
-                      textAlign: "right",
-                    }}>
-                    <button
-                      className="btn-ghost"
-                      style={{
-                        padding: "0.25rem",
-                      }}>
-                      <span
-                        className="material-symbols-outlined"
-                        style={{
-                          fontSize: "1.125rem",
-                        }}>
-                        visibility
+                </tr>
+              ) : (
+                filteredActivity.map((row, i) =>
+                  <tr key={i}>
+                    <td className="font-medium">
+                      {row.id}
+                    </td>
+                    <td>
+                      <span className={`status-badge ${row.statusClass}`}>
+                        {row.status}
                       </span>
-                    </button>
-                  </td>
-                </tr>,
+                    </td>
+                    <td>
+                      {row.dest}
+                    </td>
+                    <td>
+                      {row.date}
+                    </td>
+                    <td
+                      style={{
+                        textAlign: "right",
+                      }}>
+                      <button
+                        className="btn-ghost"
+                        style={{
+                          padding: "0.25rem",
+                        }}>
+                        <span
+                          className="material-symbols-outlined"
+                          style={{
+                            fontSize: "1.125rem",
+                          }}>
+                          visibility
+                        </span>
+                      </button>
+                    </td>
+                  </tr>,
+                )
               )}
             </tbody>
           </table>

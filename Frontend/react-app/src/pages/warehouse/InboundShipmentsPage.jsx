@@ -1,6 +1,6 @@
 import React from 'react';
 
-function InboundShipmentsPage({ onNavigate }) {
+function InboundShipmentsPage({ searchQuery, onNavigate }) {
   
   const [shipments] = React.useState([
     {
@@ -40,6 +40,16 @@ function InboundShipmentsPage({ onNavigate }) {
       items: "760",
     },
   ]);
+
+  const filteredShipments = shipments.filter(s => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (s.id && s.id.toLowerCase().includes(q)) ||
+      (s.supplier && s.supplier.toLowerCase().includes(q))
+    );
+  });
+
   return (
     <div>
       <div className="page-header" style={{ marginBottom: "2rem" }}>
@@ -85,23 +95,31 @@ function InboundShipmentsPage({ onNavigate }) {
               </tr>
             </thead>
             <tbody>
-              {shipments.map((s, idx) =>
-                <tr key={idx}>
-                  <td
-                    className="font-medium"
-                    style={{ color: "var(--on-surface)", fontWeight: "700" }}>
-                    {s.id}
+              {filteredShipments.length === 0 && shipments.length > 0 ? (
+                <tr>
+                  <td colSpan="4" style={{ textAlign: "center", padding: "2rem" }}>
+                    No shipments found for "{searchQuery}"
                   </td>
-                  <td>
-                    {s.supplier}
-                  </td>
-                  <td>
-                    {s.date}
-                  </td>
-                  <td style={{ fontWeight: "600" }}>
-                    {s.items}
-                  </td>
-                </tr>,
+                </tr>
+              ) : (
+                filteredShipments.map((s, idx) =>
+                  <tr key={idx}>
+                    <td
+                      className="font-medium"
+                      style={{ color: "var(--on-surface)", fontWeight: "700" }}>
+                      {s.id}
+                    </td>
+                    <td>
+                      {s.supplier}
+                    </td>
+                    <td>
+                      {s.date}
+                    </td>
+                    <td style={{ fontWeight: "600" }}>
+                      {s.items}
+                    </td>
+                  </tr>,
+                )
               )}
             </tbody>
           </table>

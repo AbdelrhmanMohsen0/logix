@@ -1,11 +1,24 @@
 import React from 'react';
 import Navigation from './Navigation';
 
-function Layout({ currentRoute, onNavigate, children }) {
+function Layout({ currentRoute, onNavigate, searchQuery, setSearchQuery, children }) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   React.useEffect(() => {
     setSidebarOpen(false);
   }, [currentRoute]);
+
+  const getSearchPlaceholder = () => {
+    switch (currentRoute) {
+      case "dashboard": return "Search dashboard...";
+      case "orders": return "Search by Order ID or Customer Name";
+      case "users": return "Search by Name or Email";
+      case "inventory": return "Search by SKU or Product Name";
+      case "inbound-shipments": return "Search by Shipment ID or Supplier Name";
+      case "picking-lists": return "Search by Picker, Pick List ID, or Order ID";
+      case "shipments": return "Search by Shipment ID, Customer Name, or Address";
+      default: return "Search...";
+    }
+  };
   return (
     <div className="app-layout">
       <div
@@ -44,7 +57,12 @@ function Layout({ currentRoute, onNavigate, children }) {
                 }}>
                 search
               </span>
-              <input type="text" placeholder="Search..." />
+              <input 
+                type="text" 
+                placeholder={getSearchPlaceholder()} 
+                value={searchQuery || ""}
+                onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
+              />
             </div>
           </div>
           <div className="top-header-right">
@@ -53,16 +71,6 @@ function Layout({ currentRoute, onNavigate, children }) {
                 notifications
               </span>
               <span className="notification-dot" />
-            </button>
-            <button
-              className="btn-ghost"
-              style={{
-                padding: "0.25rem",
-              }}
-              aria-label="Help">
-              <span className="material-symbols-outlined">
-                help_outline
-              </span>
             </button>
           </div>
         </header>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { AuthAPI, UserAPI, OrderAPI, TokenService } from '../../services/api';
 
-function OrderListPage({ onNavigate }) {
+function OrderListPage({ searchQuery, onNavigate }) {
   const [orders, setOrders] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
@@ -37,6 +37,16 @@ function OrderListPage({ onNavigate }) {
       year: "numeric",
     });
   };
+
+  const filteredOrders = orders.filter(o => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (o.id && o.id.toLowerCase().includes(q)) ||
+      (o.customerName && o.customerName.toLowerCase().includes(q))
+    );
+  });
+
   return (
     <div>
       <div className="page-header">
@@ -149,57 +159,65 @@ function OrderListPage({ onNavigate }) {
               </tr>
             </thead>
             <tbody>
-              {orders.map((o) =>
-                <tr key={o.id}>
-                  <td
-                    className="font-medium"
-                    style={{
-                      fontFamily: "monospace",
-                      fontSize: "0.8125rem",
-                    }}>
-                    {o.id.substring(0, 8)}
-                    …
+              {filteredOrders.length === 0 && orders.length > 0 ? (
+                <tr>
+                  <td colSpan="7" style={{ textAlign: "center", padding: "2rem" }}>
+                    No orders found for "{searchQuery}"
                   </td>
-                  <td className="font-medium">
-                    {o.customerName}
-                  </td>
-                  <td>
-                    <span className={`status-badge ${statusClass(o.orderStatus)}`}>
-                      {o.orderStatus}
-                    </span>
-                  </td>
-                  <td>
-                    {o.itemCount}
-                    {" item"}
-                    {o.itemCount !== 1 ? "s" : ""}
-                  </td>
-                  <td className="font-medium">
-                    {formatCurrency(o.totalAmount)}
-                  </td>
-                  <td>
-                    {formatDate(o.createdAt)}
-                  </td>
-                  <td
-                    style={{
-                      textAlign: "right",
-                    }}>
-                    <button
-                      className="btn-ghost"
+                </tr>
+              ) : (
+                filteredOrders.map((o) =>
+                  <tr key={o.id}>
+                    <td
+                      className="font-medium"
                       style={{
-                        padding: "0.25rem",
-                      }}
-                      onClick={() => onNavigate("order-details:" + o.id)}
-                      title="View details">
-                      <span
-                        className="material-symbols-outlined"
-                        style={{
-                          fontSize: "1.125rem",
-                        }}>
-                        visibility
+                        fontFamily: "monospace",
+                        fontSize: "0.8125rem",
+                      }}>
+                      {o.id.substring(0, 8)}
+                      …
+                    </td>
+                    <td className="font-medium">
+                      {o.customerName}
+                    </td>
+                    <td>
+                      <span className={`status-badge ${statusClass(o.orderStatus)}`}>
+                        {o.orderStatus}
                       </span>
-                    </button>
-                  </td>
-                </tr>,
+                    </td>
+                    <td>
+                      {o.itemCount}
+                      {" item"}
+                      {o.itemCount !== 1 ? "s" : ""}
+                    </td>
+                    <td className="font-medium">
+                      {formatCurrency(o.totalAmount)}
+                    </td>
+                    <td>
+                      {formatDate(o.createdAt)}
+                    </td>
+                    <td
+                      style={{
+                        textAlign: "right",
+                      }}>
+                      <button
+                        className="btn-ghost"
+                        style={{
+                          padding: "0.25rem",
+                        }}
+                        onClick={() => onNavigate("order-details:" + o.id)}
+                        title="View details">
+                        <span
+                          className="material-symbols-outlined"
+                          style={{
+                            fontSize: "1.125rem",
+                          }}>
+                          visibility
+                        </span>
+                      </button>
+                    </td>
+                  </tr>,
+                )
               )}
             </tbody>
           </table>

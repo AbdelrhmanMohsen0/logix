@@ -1,7 +1,9 @@
 import React from 'react';
 import { AuthAPI, UserAPI, OrderAPI, TokenService } from '../../services/api';
+import { useInventory } from '../../context/InventoryContext';
 
 function CreateOrderPage({ onNavigate }) {
+  const { items: inventoryItems } = useInventory();
   const emptyItem = () => ({
     SKU: "",
     name: "",
@@ -18,29 +20,7 @@ function CreateOrderPage({ onNavigate }) {
   const [loading, setLoading] = React.useState(false);
   const [showModal, setShowModal] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
-  const mockProducts = [
-    {
-      sku: "LOG-QFR-902",
-      name: "Quantum Flux Regulator",
-      stock: "IN STOCK",
-      price: 149.99,
-      icon: "tune",
-    },
-    {
-      sku: "LOG-HLP-114",
-      name: "High-Load Piston Unit",
-      stock: "IN STOCK",
-      price: 89.5,
-      icon: "precision_manufacturing",
-    },
-    {
-      sku: "LOG-KIM-552",
-      name: "Kinetic Interface Module",
-      stock: "LOW STOCK",
-      price: 299.99,
-      icon: "memory",
-    },
-  ];
+
   const handleSelectProduct = (prod) => {
     setItems((prev) => {
       const isFirstEmpty = prev.length === 1 && !prev[0].SKU && !prev[0].name;
@@ -465,13 +445,16 @@ function CreateOrderPage({ onNavigate }) {
                   flexDirection: "column",
                   gap: "0.5rem",
                 }}>
-                {mockProducts
+                {inventoryItems
                   .filter(
                     (p) =>
                       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                       p.sku.toLowerCase().includes(searchQuery.toLowerCase()),
                   )
-                  .map((prod, idx) =>
+                  .map((prod, idx) => {
+                    const inStock = prod.qty > 0;
+                    const stockText = inStock ? "IN STOCK" : "OUT OF STOCK";
+                    return (
                     <div
                       key={idx}
                       onClick={() => handleSelectProduct(prod)}
@@ -507,7 +490,7 @@ function CreateOrderPage({ onNavigate }) {
                             color: "var(--primary)",
                           }}>
                           <span className="material-symbols-outlined" style={{ fontSize: "1.25rem" }}>
-                            {prod.icon}
+                            {prod.icon || "inventory_2"}
                           </span>
                         </div>
                         <div>
@@ -535,18 +518,18 @@ function CreateOrderPage({ onNavigate }) {
                           padding: "0.25rem 0.625rem",
                           borderRadius: "var(--radius-sm)",
                           background:
-                            prod.stock === "IN STOCK"
+                            inStock
                               ? "rgba(53, 37, 205, 0.1)"
-                              : "rgba(126, 48, 0, 0.1)",
+                              : "rgba(186, 26, 26, 0.1)",
                           color:
-                            prod.stock === "IN STOCK"
+                            inStock
                               ? "var(--primary)"
-                              : "var(--tertiary)",
+                              : "var(--error)",
                         }}>
-                        {prod.stock}
+                        {stockText}
                       </div>
-                    </div>,
-                  )}
+                    </div>
+                  )})}
               </div>
             </div>
             <div

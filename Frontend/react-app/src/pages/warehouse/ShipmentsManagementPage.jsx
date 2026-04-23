@@ -1,6 +1,6 @@
 import React from 'react';
 
-function ShipmentsManagementPage({ onNavigate }) {
+function ShipmentsManagementPage({ searchQuery, onNavigate }) {
   
   const [shipments, setShipments] = React.useState([
     {
@@ -27,6 +27,17 @@ function ShipmentsManagementPage({ onNavigate }) {
   const markShipped = (idx) => {
     setShipments((s) => s.filter((_, i) => i !== idx));
   };
+
+  const filteredShipments = shipments.filter(s => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (s.orderId && s.orderId.toLowerCase().includes(q)) ||
+      (s.customer && s.customer.toLowerCase().includes(q)) ||
+      (s.address && s.address.toLowerCase().includes(q))
+    );
+  });
+
   return (
     <div>
       <div className="page-header" style={{ marginBottom: "2rem" }}>
@@ -59,32 +70,40 @@ function ShipmentsManagementPage({ onNavigate }) {
               </tr>
             </thead>
             <tbody>
-              {shipments.map((s, idx) =>
-                <tr key={idx}>
-                  <td
-                    className="font-medium"
-                    style={{ color: "var(--primary)", fontWeight: "600" }}>
-                    {s.orderId}
+              {filteredShipments.length === 0 && shipments.length > 0 ? (
+                <tr>
+                  <td colSpan="4" style={{ textAlign: "center", padding: "2rem" }}>
+                    No shipments found for "{searchQuery}"
                   </td>
-                  <td>
-                    {s.customer}
-                  </td>
-                  <td>
-                    {s.address}
-                  </td>
-                  <td>
-                    <button
-                      className="btn btn-primary"
-                      style={{
-                        padding: "0.375rem 1rem",
-                        fontSize: "0.8125rem",
-                        borderRadius: "0.375rem",
-                      }}
-                      onClick={() => markShipped(idx)}>
-                      Mark as Shipped
-                    </button>
-                  </td>
-                </tr>,
+                </tr>
+              ) : (
+                filteredShipments.map((s, idx) =>
+                  <tr key={idx}>
+                    <td
+                      className="font-medium"
+                      style={{ color: "var(--primary)", fontWeight: "600" }}>
+                      {s.orderId}
+                    </td>
+                    <td>
+                      {s.customer}
+                    </td>
+                    <td>
+                      {s.address}
+                    </td>
+                    <td>
+                      <button
+                        className="btn btn-primary"
+                        style={{
+                          padding: "0.375rem 1rem",
+                          fontSize: "0.8125rem",
+                          borderRadius: "0.375rem",
+                        }}
+                        onClick={() => markShipped(idx)}>
+                        Mark as Shipped
+                      </button>
+                    </td>
+                  </tr>,
+                )
               )}
             </tbody>
           </table>

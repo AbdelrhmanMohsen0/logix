@@ -1,6 +1,6 @@
 import React from 'react';
 
-function PickingListPage({ onNavigate }) {
+function PickingListPage({ searchQuery, onNavigate }) {
   
   const [lists] = React.useState([
     {
@@ -28,6 +28,17 @@ function PickingListPage({ onNavigate }) {
       priority: "NORMAL",
     },
   ]);
+
+  const filteredLists = lists.filter(l => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (l.picker && l.picker.toLowerCase().includes(q)) ||
+      (l.id && l.id.toLowerCase().includes(q)) ||
+      (l.order && l.order.toLowerCase().includes(q))
+    );
+  });
+
   return (
     <div>
       <div className="page-header">
@@ -76,36 +87,44 @@ function PickingListPage({ onNavigate }) {
               </tr>
             </thead>
             <tbody>
-              {lists.map((l, idx) =>
-                <tr key={idx}>
-                  <td className="font-medium" style={{ fontFamily: "monospace" }}>
-                    {l.id}
+              {filteredLists.length === 0 && lists.length > 0 ? (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: "center", padding: "2rem" }}>
+                    No picking lists found for "{searchQuery}"
                   </td>
-                  <td>
-                    {l.order}
-                  </td>
-                  <td>
-                    <span className={`status-badge ${l.status.toLowerCase()}`}>
-                      {l.status}
-                    </span>
-                  </td>
-                  <td>
-                    {l.picker}
-                  </td>
-                  <td>
-                    {l.items}
-                  </td>
-                  <td style={{ textAlign: "right" }}>
-                    <button
-                      className="btn-ghost"
-                      onClick={() => onNavigate("picking-details:" + l.id)}
-                      title="View / Start Picking">
-                      <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
-                        checklist
+                </tr>
+              ) : (
+                filteredLists.map((l, idx) =>
+                  <tr key={idx}>
+                    <td className="font-medium" style={{ fontFamily: "monospace" }}>
+                      {l.id}
+                    </td>
+                    <td>
+                      {l.order}
+                    </td>
+                    <td>
+                      <span className={`status-badge ${l.status.toLowerCase()}`}>
+                        {l.status}
                       </span>
-                    </button>
-                  </td>
-                </tr>,
+                    </td>
+                    <td>
+                      {l.picker}
+                    </td>
+                    <td>
+                      {l.items}
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      <button
+                        className="btn-ghost"
+                        onClick={() => onNavigate("picking-details:" + l.id)}
+                        title="View / Start Picking">
+                        <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
+                          checklist
+                        </span>
+                      </button>
+                    </td>
+                  </tr>,
+                )
               )}
             </tbody>
           </table>

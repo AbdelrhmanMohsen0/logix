@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { InventoryProvider } from './context/InventoryContext';
 import Layout from './components/Layout';
 import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
@@ -39,12 +40,20 @@ function App() {
   }, []);
   return (
     <AuthProvider>
-      <AppRouter route={route} navigate={navigate} />
+      <InventoryProvider>
+        <AppRouter route={route} navigate={navigate} />
+      </InventoryProvider>
     </AuthProvider>
   );
 }
 function AppRouter({ route, navigate }) {
   const { isAuthenticated, loading } = useAuth();
+  const [searchQuery, setSearchQuery] = React.useState("");
+
+  React.useEffect(() => {
+    setSearchQuery("");
+  }, [route]);
+
   if (loading) {
     return (
       <div
@@ -72,33 +81,33 @@ function AppRouter({ route, navigate }) {
   const renderPage = () => {
     switch (routeBase) {
       case "dashboard":
-        return <DashboardPage onNavigate={navigate} />;
+        return <DashboardPage searchQuery={searchQuery} onNavigate={navigate} />;
       case "users":
-        return <UserListPage onNavigate={navigate} />;
+        return <UserListPage searchQuery={searchQuery} onNavigate={navigate} />;
       case "create-user":
         return <CreateUserPage onNavigate={navigate} />;
       case "edit-user":
         return <EditUserPage userId={routeParam} onNavigate={navigate} />;
       case "orders":
-        return <OrderListPage onNavigate={navigate} />;
+        return <OrderListPage searchQuery={searchQuery} onNavigate={navigate} />;
       case "create-order":
         return <CreateOrderPage onNavigate={navigate} />;
       case "order-details":
         return <OrderDetailsPage orderId={routeParam} onNavigate={navigate} />;
       case "inventory":
-        return <InventoryManagementPage onNavigate={navigate} />;
+        return <InventoryManagementPage searchQuery={searchQuery} routeParam={routeParam} onNavigate={navigate} />;
       case "inbound-shipments":
-        return <InboundShipmentsPage onNavigate={navigate} />;
+        return <InboundShipmentsPage searchQuery={searchQuery} onNavigate={navigate} />;
       case "add-received-shipment":
         return <AddReceivedShipmentPage onNavigate={navigate} />;
       case "picking-lists":
-        return <PickingListPage onNavigate={navigate} />;
+        return <PickingListPage searchQuery={searchQuery} onNavigate={navigate} />;
       case "picking-details":
         return <PickingListDetailsPage listId={routeParam} onNavigate={navigate} />;
       case "picking-management":
         return <PickingListManagementPage onNavigate={navigate} />;
       case "shipments":
-        return <ShipmentsManagementPage onNavigate={navigate} />;
+        return <ShipmentsManagementPage searchQuery={searchQuery} onNavigate={navigate} />;
       case "create-shipment":
         return <CreateShipmentPage onNavigate={navigate} />;
       case "warehouse-operations":
@@ -130,7 +139,7 @@ function AppRouter({ route, navigate }) {
     }
   };
   return (
-    <Layout currentRoute={routeBase} onNavigate={navigate}>
+    <Layout currentRoute={routeBase} onNavigate={navigate} searchQuery={searchQuery} setSearchQuery={setSearchQuery}>
       {renderPage()}
     </Layout>
   );

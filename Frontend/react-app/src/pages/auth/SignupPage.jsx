@@ -21,7 +21,7 @@ function SignupPage({ onNavigate }) {
   const validate = () => {
     if (!form.organizationName.trim()) return "Organization name is required.";
     if (!form.email.trim()) return "Email is required.";
-    if (!form.adminName.trim()) return "Admin name is required.";
+    if (!form.adminName.trim()) return "Owner name is required.";
     if (form.password.length < 8)
       return "Password must be at least 8 characters.";
     if (form.password.length > 30)
@@ -92,22 +92,22 @@ function SignupPage({ onNavigate }) {
               className="form-input"
               type="email"
               name="email"
-              placeholder="admin@company.com"
+              placeholder="name@company.com"
               value={form.email}
               onChange={handleChange}
               autoComplete="email" />
           </div>
           <div className="form-group">
             <label htmlFor="signup-name">
-              Admin Name
+              Owner Name
             </label>
             <input
               id="signup-name"
               className="form-input"
               type="text"
-              name="adminName"
+              name="ownerName"
               placeholder="Alex Carter"
-              value={form.adminName}
+              value={form.ownerName}
               onChange={handleChange} />
           </div>
           <div className="form-group">
