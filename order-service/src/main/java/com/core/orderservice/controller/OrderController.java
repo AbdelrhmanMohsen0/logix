@@ -41,10 +41,4 @@ public class OrderController {
 		return orderService.getOrder(organizationId, id);
 	}
 	
-	@PatchMapping("/{id}/status")
-	public OrderDTO updateOrderStatus(@RequestHeader("X-Organization-ID") UUID organizationId,
-			@PathVariable UUID id, @RequestBody OrderStatus orderStatus) {
-		return orderService.changeStatus(organizationId, id, orderStatus);
-	}
-	
 }

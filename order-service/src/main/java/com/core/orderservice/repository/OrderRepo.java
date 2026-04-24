@@ -30,4 +30,7 @@ public interface OrderRepo extends JpaRepository<Order, UUID> {
 	
 	@Query("SELECT o FROM Order o LEFT JOIN FETCH o.items WHERE o.id = :id and o.organizationId = :orgId")
 	Order getOrderByOrganizationIdAndOrderId (UUID orgId, UUID id) throws OrderNotFoundException;
+	
+	@Query("SELECT o FROM Order o LEFT JOIN FETCH o.items WHERE o.id = :id")
+	Order findByOrderId (UUID id) throws OrderNotFoundException;
 }

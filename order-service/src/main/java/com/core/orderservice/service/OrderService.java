@@ -8,6 +8,7 @@ import com.core.orderservice.domain.OrderStatus;
 import com.core.orderservice.dto.ItemDTO;
 import com.core.orderservice.dto.OrderDTO;
 import com.core.orderservice.dto.OrderRequest;
+import com.core.orderservice.dto.OrderStatusUpdateDTO;
 import com.core.orderservice.dto.OrderSummaryDTO;
 import com.core.orderservice.dto.StatusHistoryDTO;
 import com.core.orderservice.exception.OrderNotFoundException;
@@ -15,16 +16,20 @@ import com.core.orderservice.model.Item;
 import com.core.orderservice.model.Order;
 import com.core.orderservice.model.OrderStatusHistory;
 import com.core.orderservice.repository.OrderRepo;
+import io.awspring.cloud.sqs.annotation.SqsListener;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
 public class OrderService {
 	
 	private final OrderRepo orderRepo;
+	private final ObjectMapper objectMapper;
+	private final SqsPublisherService sqsPublisherService;
 	
 	@Transactional
 	public OrderDTO createOrder(OrderRequest request, UUID organizationId) {
@@ -45,26 +50,30 @@ public class OrderService {
 		order.setCurrentStatus(OrderStatus.CREATED);
 		
 		OrderStatusHistory statusHistory = new OrderStatusHistory();
+		statusHistory.setOrder(order);
 		statusHistory.setStatus(OrderStatus.CREATED);
 		statusHistory.setTransitionedAt(Instant.now());
 		order.addStatusHistory(statusHistory);
 		
 		Order savedOrder = orderRepo.save(order);
-		return toDetailDTO(savedOrder);
+		
+		OrderDTO savedOrderDTO = toDetailDTO(savedOrder);
+		
+		sqsPublisherService.sendMessage("order.created", savedOrderDTO);
+		
+		return savedOrderDTO;
 	}
 	
 	@Transactional
-	public OrderDTO changeStatus(UUID orgId,UUID orderId,@Valid OrderStatus nextStatus) {
+	protected void changeStatus(@Valid OrderStatusUpdateDTO statusUpdateDTO) {
 		Order order;
 		try {
-			order = orderRepo.getOrderByOrganizationIdAndOrderId(orgId, orderId);
+			order = orderRepo.findByOrderId(statusUpdateDTO.orderId());
 		} catch (OrderNotFoundException e) {
-			throw new OrderNotFoundException(orderId);
+			throw new OrderNotFoundException(statusUpdateDTO.orderId());
 		}
-	
-		order.updateStatus(nextStatus);
-		
-		return toDetailDTO(orderRepo.save(order));
+		order.updateStatus(statusUpdateDTO);
+		orderRepo.save(order);
 	}
 	
 	public List<OrderSummaryDTO> getOrdersSummary(UUID organizationId) {
@@ -81,6 +90,16 @@ public class OrderService {
 		
 		return toDetailDTO(order);
 	}
+	
+	@SqsListener("order-status-updated-queue")
+	public void handleUpdate(String message) {
+		OrderStatusUpdateDTO updateDTO = objectMapper.readValue(message, OrderStatusUpdateDTO.class);
+		changeStatus(updateDTO);
+		
+		//todo: remove this after testing
+		System.out.println("Received: " + updateDTO);
+	}
+	
 	private OrderDTO toDetailDTO(Order order) {
 		// 1. Map and Sort Status History for the Timeline
 		List<StatusHistoryDTO> historyDTOs = order.getStatusHistory().stream()
