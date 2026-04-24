@@ -164,13 +164,10 @@ let _mockOrders = [
     ],
     statusHistory: [
       {
-        status: "CREATED",
+        status: "PENDING",
         transitionedAt: "2025-10-20T09:00:00Z",
       },
-      {
-        status: "CONFIRMED",
-        transitionedAt: "2025-10-20T10:30:00Z",
-      },
+
       {
         status: "PACKED",
         transitionedAt: "2025-10-21T08:00:00Z",
@@ -204,13 +201,10 @@ let _mockOrders = [
     ],
     statusHistory: [
       {
-        status: "CREATED",
+        status: "PENDING",
         transitionedAt: "2025-10-22T11:00:00Z",
       },
-      {
-        status: "CONFIRMED",
-        transitionedAt: "2025-10-22T12:00:00Z",
-      },
+
       {
         status: "PACKED",
         transitionedAt: "2025-10-23T09:00:00Z",
@@ -252,12 +246,8 @@ let _mockOrders = [
     ],
     statusHistory: [
       {
-        status: "CREATED",
-        transitionedAt: "2025-10-24T14:00:00Z",
-      },
-      {
         status: "PENDING",
-        transitionedAt: "2025-10-24T14:30:00Z",
+        transitionedAt: "2025-10-24T14:00:00Z",
       },
     ],
     createdAt: "2025-10-24T14:00:00Z",
@@ -268,7 +258,7 @@ let _mockOrders = [
     supplierName: "LogiX Supplier",
     customerPhone: "+1-555-0400",
     customerAddress: "321 Oak Rd, Seattle, WA 98101",
-    orderStatus: "CREATED",
+    orderStatus: "PENDING",
     totalAmount: 3450.0,
     items: [
       {
@@ -280,7 +270,7 @@ let _mockOrders = [
     ],
     statusHistory: [
       {
-        status: "CREATED",
+        status: "PENDING",
         transitionedAt: "2025-10-25T08:00:00Z",
       },
     ],
@@ -299,11 +289,11 @@ export const OrderAPI = {
       id: `ORDER-${String(_nextMockOrderId++).padStart(3, '0')}`,
       supplierName: data.supplierName || "LogiX Supplier",
       ...data,
-      orderStatus: "CREATED",
+      orderStatus: "PENDING",
       totalAmount: total,
       statusHistory: [
         {
-          status: "CREATED",
+          status: "PENDING",
           transitionedAt: new Date().toISOString(),
         },
       ],
@@ -328,6 +318,11 @@ export const OrderAPI = {
     await _delay(400);
     const order = _mockOrders.find((o) => o.id === id);
     if (!order) throw new Error("Order not found");
+    
+    if (status === "PACKED" && order.orderStatus !== "IN_PROGRESS") {
+      throw new Error("Order must be marked as IN_PROGRESS before it can be packed.");
+    }
+
     order.orderStatus = status;
     order.statusHistory.push({
       status,

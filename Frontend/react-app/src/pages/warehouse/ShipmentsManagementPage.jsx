@@ -12,11 +12,9 @@ function ShipmentsManagementPage({ searchQuery, onNavigate }) {
     });
   }, []);
 
-  const markShipped = async (id) => {
-    // In a real app, this would call OrderAPI.updateOrderStatus
-    // Since we're doing frontend-only in-memory, we can just update the list
+  const handleUpdateStatus = async (id, status) => {
     try {
-      await OrderAPI.updateOrderStatus(id, "SHIPPED");
+      await OrderAPI.updateOrderStatus(id, status);
       const updated = await OrderAPI.getOrders();
       setOrders(updated);
     } catch (e) {
@@ -24,13 +22,14 @@ function ShipmentsManagementPage({ searchQuery, onNavigate }) {
     }
   };
 
-  const filteredOrders = orders.filter(o => {
+  const filteredOrders = orders.filter(s => {
+    if (!["PACKED", "SHIPPED", "DELIVERED"].includes(s.orderStatus)) return false;
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return (
-      (o.id && o.id.toLowerCase().includes(q)) ||
-      (o.customerName && o.customerName.toLowerCase().includes(q)) ||
-      (o.supplierName && o.supplierName.toLowerCase().includes(q))
+      (s.id && s.id.toLowerCase().includes(q)) ||
+      (s.customerName && s.customerName.toLowerCase().includes(q)) ||
+      (s.supplierName && s.supplierName.toLowerCase().includes(q))
     );
   });
 
@@ -98,18 +97,28 @@ function ShipmentsManagementPage({ searchQuery, onNavigate }) {
                       </span>
                     </td>
                     <td>
-                      {o.orderStatus !== "SHIPPED" && o.orderStatus !== "DELIVERED" && (
+                      <div style={{ textAlign: "right", display: "flex", gap: "0.25rem", justifyContent: "flex-end" }}>
+                      {o.orderStatus === "PACKED" && (
                         <button
-                          className="btn btn-primary"
-                          style={{
-                            padding: "0.375rem 1rem",
-                            fontSize: "0.8125rem",
-                            borderRadius: "0.375rem",
-                          }}
-                          onClick={() => markShipped(o.id)}>
-                          Mark as Shipped
+                          className="btn-ghost"
+                          title="Mark as Shipped"
+                          onClick={() => handleUpdateStatus(o.id, "SHIPPED")}>
+                          <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
+                            local_shipping
+                          </span>
                         </button>
                       )}
+                      {o.orderStatus === "SHIPPED" && (
+                        <button
+                          className="btn-ghost"
+                          title="Mark as Delivered"
+                          onClick={() => handleUpdateStatus(o.id, "DELIVERED")}>
+                          <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
+                            task_alt
+                          </span>
+                        </button>
+                      )}
+                      </div>
                     </td>
                   </tr>
                 ))

@@ -13,6 +13,7 @@ function PickingListPage({ searchQuery, onNavigate }) {
   }, []);
 
   const filteredOrders = orders.filter(o => {
+    if (o.orderStatus !== "PENDING" && o.orderStatus !== "IN_PROGRESS") return false;
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return (
@@ -30,6 +31,16 @@ function PickingListPage({ searchQuery, onNavigate }) {
     return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
   const statusClass = (s) => (s || "").toLowerCase();
+
+  const handleStartWork = async (id) => {
+    try {
+      await OrderAPI.updateOrderStatus(id, "IN_PROGRESS");
+      const updated = await OrderAPI.getOrders();
+      setOrders(updated);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
     <div>
@@ -96,10 +107,20 @@ function PickingListPage({ searchQuery, onNavigate }) {
                       </span>
                     </td>
                     <td style={{ textAlign: "right" }}>
+                      {o.orderStatus === "PENDING" && (
+                        <button
+                          className="btn-ghost"
+                          onClick={() => handleStartWork(o.id)}
+                          title="Start Work">
+                          <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
+                            play_arrow
+                          </span>
+                        </button>
+                      )}
                       <button
                         className="btn-ghost"
                         onClick={() => onNavigate("picking-details:" + o.id)}
-                        title="View / Start Picking">
+                        title={o.orderStatus === "IN_PROGRESS" ? "Continue Picking" : "View Details"}>
                         <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
                           checklist
                         </span>

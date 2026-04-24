@@ -38,9 +38,8 @@ function OrderDetailsPage({ orderId, onNavigate }) {
   };
   const statusClass = (s) => (s || "").toLowerCase();
   const allStatuses = [
-    "CREATED",
     "PENDING",
-    "CONFIRMED",
+    "IN_PROGRESS",
     "PACKED",
     "SHIPPED",
     "DELIVERED",
@@ -141,12 +140,7 @@ function OrderDetailsPage({ orderId, onNavigate }) {
         {orderId}
         {" endpoint is not yet implemented."}
       </div>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "2fr 1fr",
-          gap: "1.5rem",
-        }}>
+      <div className="responsive-grid">
         <div>
           <div
             className="card"

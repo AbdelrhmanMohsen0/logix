@@ -159,12 +159,7 @@ function CreateOrderPage({ onNavigate }) {
             }}>
             Customer Information
           </h3>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "1rem",
-            }}>
+          <div className="form-grid">
             <div className="form-group">
               <label htmlFor="co-name">
                 Customer Name

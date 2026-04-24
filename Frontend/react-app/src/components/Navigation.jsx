@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 
-function Navigation({ currentRoute, onNavigate }) {
+function Navigation({ currentRoute, onNavigate, isOpen }) {
   const { user, logout } = useAuth();
   const navItems = [
     {
@@ -44,7 +44,7 @@ function Navigation({ currentRoute, onNavigate }) {
     : "??";
   const roleName = (user?.role || "").replace("ROLE_", "");
   return (
-    <nav className="sidebar" id="sidebar">
+    <nav className={`sidebar ${isOpen ? "open" : ""}`} id="sidebar">
       <div className="sidebar-brand">
         <h1>
           LogiX
