@@ -13,6 +13,10 @@ function CreateShipmentPage({ onNavigate }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const order = await OrderAPI.getOrder(form.orderId);
+      if (order.orderStatus !== "PACKED") {
+        throw new Error(`Order must be marked as PACKED before shipping. Current status is ${order.orderStatus}.`);
+      }
       await OrderAPI.updateOrderStatus(form.orderId, "SHIPPED");
       alert("Shipment Created! Status updated to SHIPPED.");
       onNavigate("shipments");

@@ -794,6 +794,10 @@ td.font-medium {
   background: var(--warning-bg);
   color: var(--warning);
 }
+.status-badge.in_progress {
+  background: var(--info-bg);
+  color: var(--info);
+}
 .status-badge.confirmed {
   background: rgba(53, 37, 205, 0.1);
   color: var(--primary);
@@ -823,12 +827,23 @@ td.font-medium {
   color: var(--error);
 }
 
-/* ---------- Charts placeholder ---------- */
 .charts-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 1.5rem;
   margin-bottom: 2rem;
+}
+
+.responsive-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
 }
 
 .chart-card {
@@ -1132,7 +1147,9 @@ td.font-medium {
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1024px) {
-  .charts-grid {
+  .charts-grid,
+  .responsive-grid,
+  .form-grid {
     grid-template-columns: 1fr;
   }
 }

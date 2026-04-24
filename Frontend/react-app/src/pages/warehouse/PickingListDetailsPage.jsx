@@ -4,14 +4,16 @@ import { OrderAPI } from '../../services/api';
 function PickingListDetailsPage({ listId, onNavigate }) {
   
   const [items, setItems] = React.useState([]);
+  const [order, setOrder] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
 
-  React.useEffect(() => {
+  const fetchOrder = React.useCallback(() => {
     setLoading(true);
     OrderAPI.getOrder(listId)
-      .then(order => {
-        setItems(order.items.map(it => ({
+      .then(data => {
+        setOrder(data);
+        setItems(data.items.map(it => ({
           sku: it.SKU,
           name: it.name,
           qty: it.quantity,
@@ -23,12 +25,29 @@ function PickingListDetailsPage({ listId, onNavigate }) {
       .finally(() => setLoading(false));
   }, [listId]);
 
+  React.useEffect(() => {
+    fetchOrder();
+  }, [fetchOrder]);
+
   const allPicked = items.length > 0 && items.every((i) => i.picked);
   
   const togglePicked = (idx) => {
+    if (order?.orderStatus === "PENDING") {
+      alert("Please press 'Start Work' before picking items.");
+      return;
+    }
     const newItems = [...items];
     newItems[idx].picked = !newItems[idx].picked;
     setItems(newItems);
+  };
+  
+  const handleStartWork = async () => {
+    try {
+      await OrderAPI.updateOrderStatus(listId, "IN_PROGRESS");
+      fetchOrder();
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
   };
   
   const handleComplete = async () => {
@@ -48,9 +67,16 @@ function PickingListDetailsPage({ listId, onNavigate }) {
     <div>
       <div className="page-header">
         <div>
-          <h2>
-            {`Picking List Details: ${listId || "N/A"}`}
-          </h2>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.25rem" }}>
+            <h2 style={{ margin: 0 }}>
+              {`Picking List Details: ${listId || "N/A"}`}
+            </h2>
+            {order && (
+              <span className={`status-badge ${order.orderStatus.toLowerCase()}`}>
+                {order.orderStatus}
+              </span>
+            )}
+          </div>
           <p>
             Mark items as picked as you fulfill the order.
           </p>
@@ -96,10 +122,20 @@ function PickingListDetailsPage({ listId, onNavigate }) {
             </div>
           </div>,
         )}
-        <div style={{ marginTop: "2rem", textAlign: "right" }}>
+        <div style={{ marginTop: "2rem", display: "flex", justifyContent: "flex-end", gap: "1rem" }}>
+          {order?.orderStatus === "PENDING" && (
+            <button
+              className="btn btn-secondary"
+              onClick={handleStartWork}>
+              <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
+                play_arrow
+              </span>
+              Start Work
+            </button>
+          )}
           <button
             className="btn btn-primary"
-            disabled={!allPicked}
+            disabled={!allPicked || order?.orderStatus === "PENDING"}
             onClick={handleComplete}>
             Complete Picking
           </button>

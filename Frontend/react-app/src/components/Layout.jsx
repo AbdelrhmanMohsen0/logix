@@ -31,12 +31,8 @@ function Layout({ currentRoute, onNavigate, searchQuery, setSearchQuery, childre
               zIndex: 50,
             }
           : undefined}>
-        <Navigation currentRoute={currentRoute} onNavigate={onNavigate} />
+        <Navigation currentRoute={currentRoute} onNavigate={onNavigate} isOpen={sidebarOpen} />
       </div>
-      {sidebarOpen &&
-        <style>
-          {`.sidebar { transform: translateX(0) !important; }`}
-        </style>}
       <div className="main-content">
         <header className="top-header">
           <div className="top-header-left">
