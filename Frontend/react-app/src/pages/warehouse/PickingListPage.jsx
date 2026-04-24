@@ -1,43 +1,35 @@
 import React from 'react';
+import { OrderAPI } from '../../services/api';
 
 function PickingListPage({ searchQuery, onNavigate }) {
-  
-  const [lists] = React.useState([
-    {
-      id: "PICK-101",
-      order: "ORD-5521",
-      status: "PENDING",
-      picker: "Unassigned",
-      items: 5,
-      priority: "HIGH",
-    },
-    {
-      id: "PICK-102",
-      order: "ORD-5522",
-      status: "IN-PROGRESS",
-      picker: "M. Chen",
-      items: 12,
-      priority: "NORMAL",
-    },
-    {
-      id: "PICK-103",
-      order: "ORD-5519",
-      status: "COMPLETED",
-      picker: "T. Kim",
-      items: 2,
-      priority: "NORMAL",
-    },
-  ]);
+  const [orders, setOrders] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
 
-  const filteredLists = lists.filter(l => {
+  React.useEffect(() => {
+    OrderAPI.getOrders().then((data) => {
+      setOrders(data);
+      setLoading(false);
+    });
+  }, []);
+
+  const filteredOrders = orders.filter(o => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return (
-      (l.picker && l.picker.toLowerCase().includes(q)) ||
-      (l.id && l.id.toLowerCase().includes(q)) ||
-      (l.order && l.order.toLowerCase().includes(q))
+      (o.id && o.id.toLowerCase().includes(q)) ||
+      (o.customerName && o.customerName.toLowerCase().includes(q)) ||
+      (o.supplierName && o.supplierName.toLowerCase().includes(q))
     );
   });
+
+  const formatCurrency = (n) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n || 0);
+
+  const formatDate = (d) => {
+    if (!d) return "—";
+    return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  };
+  const statusClass = (s) => (s || "").toLowerCase();
 
   return (
     <div>
@@ -66,65 +58,55 @@ function PickingListPage({ searchQuery, onNavigate }) {
           <table>
             <thead>
               <tr>
-                <th>
-                  Pick List ID
-                </th>
-                <th>
-                  Order ID
-                </th>
-                <th>
-                  Status
-                </th>
-                <th>
-                  Picker
-                </th>
-                <th>
-                  Items
-                </th>
-                <th style={{ textAlign: "right" }}>
-                  Actions
-                </th>
+                <th>Order ID</th>
+                <th>Customer Name</th>
+                <th>Supplier Name</th>
+                <th>Items</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th style={{ textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredLists.length === 0 && lists.length > 0 ? (
+              {loading ? (
+                <tr><td colSpan="9" style={{ textAlign: "center", padding: "2rem" }}>Loading...</td></tr>
+              ) : filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: "center", padding: "2rem" }}>
+                  <td colSpan="9" style={{ textAlign: "center", padding: "2rem" }}>
                     No picking lists found for "{searchQuery}"
                   </td>
                 </tr>
               ) : (
-                filteredLists.map((l, idx) =>
-                  <tr key={idx}>
-                    <td className="font-medium" style={{ fontFamily: "monospace" }}>
-                      {l.id}
+                filteredOrders.map((o) => (
+                  <tr key={o.id}>
+                    <td className="font-medium" style={{ fontFamily: "monospace", fontSize: "0.8125rem" }}>
+                      {o.id}
                     </td>
+                    <td className="font-medium">{o.customerName}</td>
+                    <td>{o.supplierName}</td>
+                    <td>{o.items ? o.items.map(i => i.name).join(", ") : "—"}</td>
+                    <td>{o.items ? o.items.reduce((sum, i) => sum + i.quantity, 0) : 0}</td>
+                    <td className="font-medium">{formatCurrency(o.totalAmount)}</td>
+                    <td>{formatDate(o.createdAt)}</td>
                     <td>
-                      {l.order}
-                    </td>
-                    <td>
-                      <span className={`status-badge ${l.status.toLowerCase()}`}>
-                        {l.status}
+                      <span className={`status-badge ${statusClass(o.orderStatus)}`}>
+                        {o.orderStatus}
                       </span>
-                    </td>
-                    <td>
-                      {l.picker}
-                    </td>
-                    <td>
-                      {l.items}
                     </td>
                     <td style={{ textAlign: "right" }}>
                       <button
                         className="btn-ghost"
-                        onClick={() => onNavigate("picking-details:" + l.id)}
+                        onClick={() => onNavigate("picking-details:" + o.id)}
                         title="View / Start Picking">
                         <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
                           checklist
                         </span>
                       </button>
                     </td>
-                  </tr>,
-                )
+                  </tr>
+                ))
               )}
             </tbody>
           </table>

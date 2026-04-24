@@ -136,19 +136,25 @@ function OrderListPage({ searchQuery, onNavigate }) {
                   Order ID
                 </th>
                 <th>
-                  Customer
+                  Customer Name
                 </th>
                 <th>
-                  Status
+                  Supplier Name
                 </th>
                 <th>
                   Items
                 </th>
                 <th>
-                  Total
+                  Quantity
+                </th>
+                <th>
+                  Price
                 </th>
                 <th>
                   Date
+                </th>
+                <th>
+                  Status
                 </th>
                 <th
                   style={{
@@ -174,27 +180,30 @@ function OrderListPage({ searchQuery, onNavigate }) {
                         fontFamily: "monospace",
                         fontSize: "0.8125rem",
                       }}>
-                      {o.id.substring(0, 8)}
-                      …
+                      {o.id}
                     </td>
                     <td className="font-medium">
                       {o.customerName}
                     </td>
                     <td>
-                      <span className={`status-badge ${statusClass(o.orderStatus)}`}>
-                        {o.orderStatus}
-                      </span>
+                      {o.supplierName}
                     </td>
                     <td>
-                      {o.itemCount}
-                      {" item"}
-                      {o.itemCount !== 1 ? "s" : ""}
+                      {o.items ? o.items.map(i => i.name).join(", ") : "—"}
+                    </td>
+                    <td>
+                      {o.items ? o.items.reduce((sum, i) => sum + i.quantity, 0) : 0}
                     </td>
                     <td className="font-medium">
                       {formatCurrency(o.totalAmount)}
                     </td>
                     <td>
                       {formatDate(o.createdAt)}
+                    </td>
+                    <td>
+                      <span className={`status-badge ${statusClass(o.orderStatus)}`}>
+                        {o.orderStatus}
+                      </span>
                     </td>
                     <td
                       style={{

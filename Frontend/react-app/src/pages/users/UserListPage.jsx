@@ -207,22 +207,24 @@ function UserListPage({ searchQuery, onNavigate }) {
                           edit
                         </span>
                       </button>
-                      <button
-                        className="btn-ghost"
-                        style={{
-                          padding: "0.25rem",
-                          color: "var(--error)",
-                        }}
-                        onClick={() => setDeleteId(u.id)}
-                        title="Delete user">
-                        <span
-                          className="material-symbols-outlined"
+                      {u.role !== 'ROLE_OWNER' && (
+                        <button
+                          className="btn-ghost"
                           style={{
-                            fontSize: "1.125rem",
-                          }}>
-                          delete
-                        </span>
-                      </button>
+                            padding: "0.25rem",
+                            color: "var(--error)",
+                          }}
+                          onClick={() => setDeleteId(u.id)}
+                          title="Delete user">
+                          <span
+                            className="material-symbols-outlined"
+                            style={{
+                              fontSize: "1.125rem",
+                            }}>
+                            delete
+                          </span>
+                        </button>
+                      )}
                     </td>
                   </tr>,
                 )

@@ -282,58 +282,7 @@ function OrderDetailsPage({ orderId, onNavigate }) {
           </div>
         </div>
         <div>
-          <div
-            className="card"
-            style={{
-              padding: "1.5rem",
-              marginBottom: "1.5rem",
-            }}>
-            <h3
-              style={{
-                marginBottom: "1rem",
-              }}>
-              Update Status
-            </h3>
-            <div
-              className="form-group"
-              style={{
-                marginBottom: "0.75rem",
-              }}>
-              <select
-                className="form-input"
-                value={order.orderStatus}
-                onChange={(e) => handleStatusChange(e.target.value)}
-                disabled={statusLoading}>
-                {allStatuses.map((s) =>
-                  <option key={s} value={s}>
-                    {s}
-                  </option>,
-                )}
-              </select>
-            </div>
-            {statusLoading &&
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  fontSize: "0.8125rem",
-                  color: "var(--on-surface-variant)",
-                }}>
-                <div className="spinner" />
-                Updating…
-              </div>}
-            <p
-              style={{
-                fontSize: "0.75rem",
-                color: "var(--outline)",
-                marginTop: "0.5rem",
-              }}>
-              Mock — PUT /order/
-              {orderId}
-              /status is not yet implemented.
-            </p>
-          </div>
+
           <div
             className="card"
             style={{
@@ -346,17 +295,25 @@ function OrderDetailsPage({ orderId, onNavigate }) {
               Status History
             </h3>
             <div className="timeline">
-              {[...order.statusHistory].reverse().map((sh, i) =>
-                <div className="timeline-item" key={i}>
-                  <div className="timeline-dot" />
-                  <h4>
-                    {sh.status}
-                  </h4>
-                  <time>
-                    {formatDateTime(sh.transitionedAt)}
-                  </time>
-                </div>,
-              )}
+              {allStatuses.map((statusName, i) => {
+                const historyEntry = order.statusHistory.find(sh => sh.status === statusName);
+                const isCurrent = order.orderStatus === statusName;
+                const isCompleted = !!historyEntry && !isCurrent;
+                
+                return (
+                  <div className={`timeline-item ${isCurrent ? 'current' : ''} ${isCompleted ? 'completed' : ''}`} key={i} style={{ opacity: historyEntry ? 1 : 0.5 }}>
+                    <div className="timeline-dot" style={{ background: isCurrent ? 'var(--primary)' : (isCompleted ? 'var(--primary-fixed)' : 'var(--surface-container-high)') }} />
+                    <h4 style={{ color: isCurrent ? 'var(--primary)' : 'inherit' }}>
+                      {statusName}
+                    </h4>
+                    {historyEntry && (
+                      <time>
+                        {formatDateTime(historyEntry.transitionedAt)}
+                      </time>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

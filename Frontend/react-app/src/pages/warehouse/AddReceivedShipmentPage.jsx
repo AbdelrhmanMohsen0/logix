@@ -1,7 +1,8 @@
 import React from 'react';
+import { useInventory } from '../../context/InventoryContext';
 
 function AddReceivedShipmentPage({ onNavigate }) {
-  
+  const { updateInventoryItem } = useInventory();
   const [form, setForm] = React.useState({ shipmentId: "", supplier: "" });
   const [items, setItems] = React.useState([
     {
@@ -32,8 +33,21 @@ function AddReceivedShipmentPage({ onNavigate }) {
   });
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert("Mock Shipment Added Successfully!");
-    onNavigate("inbound-shipments");
+    try {
+      items.forEach(it => {
+        // Just mock updating the inventory (using sku, name, loc, etc.)
+        // We'll update the quantity if the SKU matches, otherwise we'd need addInventoryItem
+        updateInventoryItem(it.sku, {
+          name: it.name,
+          qty: parseInt(it.qty, 10),
+          loc: it.loc
+        });
+      });
+      alert("Shipment Received! Stock added to inventory.");
+      onNavigate("inbound-shipments");
+    } catch (err) {
+      alert("Error adding shipment: " + err.message);
+    }
   };
   const handleAddItem = () => {
     if (modalForm.name && modalForm.sku && modalForm.qty && modalForm.loc) {

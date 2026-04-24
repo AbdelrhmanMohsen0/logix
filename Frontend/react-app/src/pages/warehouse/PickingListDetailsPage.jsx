@@ -1,33 +1,49 @@
 import React from 'react';
+import { OrderAPI } from '../../services/api';
 
 function PickingListDetailsPage({ listId, onNavigate }) {
   
-  const [items, setItems] = React.useState([
-    {
-      sku: "STAT-005",
-      name: "Notebook Bundle",
-      qty: 2,
-      picked: false,
-      loc: "Zone B - B02",
-    },
-    {
-      sku: "ELEC-001",
-      name: "Wireless Keyboard",
-      qty: 1,
-      picked: false,
-      loc: "Zone A - A12",
-    },
-  ]);
-  const allPicked = items.every((i) => i.picked);
+  const [items, setItems] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState("");
+
+  React.useEffect(() => {
+    setLoading(true);
+    OrderAPI.getOrder(listId)
+      .then(order => {
+        setItems(order.items.map(it => ({
+          sku: it.SKU,
+          name: it.name,
+          qty: it.quantity,
+          loc: "Zone A - Bin 1", // Mock location
+          picked: false
+        })));
+      })
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [listId]);
+
+  const allPicked = items.length > 0 && items.every((i) => i.picked);
+  
   const togglePicked = (idx) => {
     const newItems = [...items];
     newItems[idx].picked = !newItems[idx].picked;
     setItems(newItems);
   };
-  const handleComplete = () => {
-    alert("Picking List Completed!");
-    onNavigate("picking-lists");
+  
+  const handleComplete = async () => {
+    try {
+      await OrderAPI.updateOrderStatus(listId, "PACKED");
+      alert("Picking and Packing Completed! Status changed to PACKED.");
+      onNavigate("picking-lists");
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
   };
+
+  if (loading) return <div className="loading-center"><div className="spinner spinner-lg"/></div>;
+  if (error) return <div className="alert alert-error">{error}</div>;
+
   return (
     <div>
       <div className="page-header">

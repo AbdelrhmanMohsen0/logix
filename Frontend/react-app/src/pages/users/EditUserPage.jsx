@@ -58,7 +58,7 @@ function EditUserPage({ userId, onNavigate }) {
     }
   };
   const roles = [
-    "ROLE_OWNER",
+    "ROLE_ADMIN",
     "ROLE_MANAGER",
     "ROLE_SALES",
     "ROLE_WORKER",

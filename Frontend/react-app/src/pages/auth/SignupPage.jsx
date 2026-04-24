@@ -105,9 +105,9 @@ function SignupPage({ onNavigate }) {
               id="signup-name"
               className="form-input"
               type="text"
-              name="ownerName"
+              name="adminName"
               placeholder="Alex Carter"
-              value={form.ownerName}
+              value={form.adminName}
               onChange={handleChange} />
           </div>
           <div className="form-group">

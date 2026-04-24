@@ -1,15 +1,15 @@
 const API_BASE_AUTH = "http://localhost:8081";
 const API_BASE_ORDER = "http://localhost:8082";
-/* -------- Token helpers -------- */
+let _token = null;
 export const TokenService = {
   get() {
-    return localStorage.getItem("logix_token");
+    return _token;
   },
   set(t) {
-    localStorage.setItem("logix_token", t);
+    _token = t;
   },
   remove() {
-    localStorage.removeItem("logix_token");
+    _token = null;
   },
 };
 /* -------- Generic fetch wrapper -------- */
@@ -38,37 +38,22 @@ async function apiFetch(baseUrl, path, options = {}) {
   return text ? JSON.parse(text) : null;
 }
 /* ======== AUTH SERVICE ======== */
+let _registeredCompanies = [];
+
 export const AuthAPI = {
   async login(email, password) {
-    try {
-      return await apiFetch(API_BASE_AUTH, "/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      });
-    } catch (err) {
-      console.warn(
-        "Auth-service unavailable/CORS, using mock login:",
-        err.message,
-      );
-      await _delay(500);
-      const payload = btoa(JSON.stringify({ sub: email, role: "ROLE_OWNER" }));
-      return { token: `mock.${payload}.sig` };
-    }
+    await _delay(500);
+    const payload = btoa(JSON.stringify({ sub: email, role: "ROLE_OWNER" }));
+    return { token: `mock.${payload}.sig` };
   },
   async signup({ organizationName, email, adminName, password }) {
-    try {
-      return await apiFetch(API_BASE_AUTH, "/signup", {
-        method: "POST",
-        body: JSON.stringify({ organizationName, email, adminName, password }),
-      });
-    } catch (err) {
-      console.warn(
-        "Auth-service unavailable/CORS, using mock signup:",
-        err.message,
-      );
-      await _delay(500);
-      return { message: "Mock signup successful" };
+    await _delay(500);
+    if (_registeredCompanies.includes(organizationName)) {
+      throw new Error("Company already registered");
     }
+    _registeredCompanies.push(organizationName);
+    const payload = btoa(JSON.stringify({ sub: email, name: adminName, role: "ROLE_OWNER" }));
+    return { token: `mock.${payload}.sig` };
   },
 };
 /* ======== USER SERVICE (MOCK — backend endpoints not yet implemented) ======== */
@@ -156,8 +141,9 @@ export const UserAPI = {
 /* ======== ORDER SERVICE ======== */
 let _mockOrders = [
   {
-    id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    id: "ORDER-001",
     customerName: "Acme Corp",
+    supplierName: "LogiX Supplier",
     customerPhone: "+1-555-0100",
     customerAddress: "123 Business Ave, New York, NY 10001",
     orderStatus: "DELIVERED",
@@ -201,8 +187,9 @@ let _mockOrders = [
     createdAt: "2025-10-20T09:00:00Z",
   },
   {
-    id: "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+    id: "ORDER-002",
     customerName: "TechStart Ltd",
+    supplierName: "LogiX Supplier",
     customerPhone: "+1-555-0200",
     customerAddress: "456 Innovation Blvd, Chicago, IL 60601",
     orderStatus: "SHIPPED",
@@ -236,8 +223,9 @@ let _mockOrders = [
     createdAt: "2025-10-22T11:00:00Z",
   },
   {
-    id: "c3d4e5f6-a7b8-9012-cdef-123456789012",
+    id: "ORDER-003",
     customerName: "Global Supplies Inc",
+    supplierName: "LogiX Supplier",
     customerPhone: "+1-555-0300",
     customerAddress: "789 Commerce St, Austin, TX 73301",
     orderStatus: "PENDING",
@@ -275,8 +263,9 @@ let _mockOrders = [
     createdAt: "2025-10-24T14:00:00Z",
   },
   {
-    id: "d4e5f6a7-b8c9-0123-defa-234567890123",
+    id: "ORDER-004",
     customerName: "Redwood Partners",
+    supplierName: "LogiX Supplier",
     customerPhone: "+1-555-0400",
     customerAddress: "321 Oak Rd, Seattle, WA 98101",
     orderStatus: "CREATED",
@@ -301,47 +290,31 @@ let _mockOrders = [
 let _nextMockOrderId = 5;
 export const OrderAPI = {
   async createOrder(data) {
-    try {
-      return await apiFetch(API_BASE_ORDER, "/order", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
-    } catch (err) {
-      console.warn("Order-service unavailable, using mock:", err.message);
-      await _delay(500);
-      const total = data.items.reduce(
-        (s, i) => s + i.quantity * i.priceAtPurchase,
-        0,
-      );
-      const newOrder = {
-        id: crypto.randomUUID
-          ? crypto.randomUUID()
-          : `mock-${_nextMockOrderId++}`,
-        ...data,
-        orderStatus: "CREATED",
-        totalAmount: total,
-        statusHistory: [
-          {
-            status: "CREATED",
-            transitionedAt: new Date().toISOString(),
-          },
-        ],
-        createdAt: new Date().toISOString(),
-      };
-      _mockOrders.unshift(newOrder);
-      return newOrder;
-    }
+    await _delay(500);
+    const total = data.items.reduce(
+      (s, i) => s + i.quantity * i.priceAtPurchase,
+      0,
+    );
+    const newOrder = {
+      id: `ORDER-${String(_nextMockOrderId++).padStart(3, '0')}`,
+      supplierName: data.supplierName || "LogiX Supplier",
+      ...data,
+      orderStatus: "CREATED",
+      totalAmount: total,
+      statusHistory: [
+        {
+          status: "CREATED",
+          transitionedAt: new Date().toISOString(),
+        },
+      ],
+      createdAt: new Date().toISOString(),
+    };
+    _mockOrders.unshift(newOrder);
+    return newOrder;
   },
   async getOrders() {
     await _delay(400);
-    return _mockOrders.map((o) => ({
-      id: o.id,
-      customerName: o.customerName,
-      orderStatus: o.orderStatus,
-      totalAmount: o.totalAmount,
-      createdAt: o.createdAt,
-      itemCount: o.items.length,
-    }));
+    return [..._mockOrders];
   },
   async getOrder(id) {
     await _delay(300);

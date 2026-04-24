@@ -3,7 +3,7 @@ import { AuthAPI, UserAPI, OrderAPI, TokenService } from '../../services/api';
 import { useInventory } from '../../context/InventoryContext';
 
 function CreateOrderPage({ onNavigate }) {
-  const { items: inventoryItems } = useInventory();
+  const { items: inventoryItems, updateInventoryItem } = useInventory();
   const emptyItem = () => ({
     SKU: "",
     name: "",
@@ -67,6 +67,8 @@ function CreateOrderPage({ onNavigate }) {
   const validate = () => {
     if (!form.customerName.trim()) return "Customer name is required.";
     if (!form.customerPhone.trim()) return "Customer phone is required.";
+    const digitsOnly = form.customerPhone.replace(/\D/g, "");
+    if (digitsOnly.length < 10) return "Customer phone must be a valid, complete number.";
     if (!form.customerAddress.trim()) return "Customer address is required.";
     for (let i = 0; i < items.length; i++) {
       const it = items[i];
@@ -98,6 +100,17 @@ function CreateOrderPage({ onNavigate }) {
           priceAtPurchase: parseFloat(it.priceAtPurchase),
         })),
       };
+      
+      // Inventory reduction
+      payload.items.forEach(it => {
+        const inventoryItem = inventoryItems.find(i => i.sku === it.SKU);
+        if (inventoryItem) {
+          updateInventoryItem(it.SKU, {
+            qty: Math.max(0, inventoryItem.qty - it.quantity)
+          });
+        }
+      });
+      
       await OrderAPI.createOrder(payload);
       onNavigate("orders");
     } catch (err) {

@@ -1,42 +1,47 @@
 import React from 'react';
+import { OrderAPI } from '../../services/api';
 
 function ShipmentsManagementPage({ searchQuery, onNavigate }) {
-  
-  const [shipments, setShipments] = React.useState([
-    {
-      orderId: "#ORD-8821",
-      customer: "James Wilson",
-      address: "452 Industrial Way, Suite 10, Seattle, WA 98101",
-    },
-    {
-      orderId: "#ORD-8822",
-      customer: "Sarah Miller",
-      address: "1209 East Maple Blvd, Austin, TX 78701",
-    },
-    {
-      orderId: "#ORD-8823",
-      customer: "Tech Corp Solutions",
-      address: "88 Market Street, Floor 4, San Francisco, CA 94105",
-    },
-    {
-      orderId: "#ORD-8824",
-      customer: "Robert Chen",
-      address: "2130 Ventura Blvd, Los Angeles, CA 90012",
-    },
-  ]);
-  const markShipped = (idx) => {
-    setShipments((s) => s.filter((_, i) => i !== idx));
+  const [orders, setOrders] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    OrderAPI.getOrders().then((data) => {
+      setOrders(data);
+      setLoading(false);
+    });
+  }, []);
+
+  const markShipped = async (id) => {
+    // In a real app, this would call OrderAPI.updateOrderStatus
+    // Since we're doing frontend-only in-memory, we can just update the list
+    try {
+      await OrderAPI.updateOrderStatus(id, "SHIPPED");
+      const updated = await OrderAPI.getOrders();
+      setOrders(updated);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const filteredShipments = shipments.filter(s => {
+  const filteredOrders = orders.filter(o => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return (
-      (s.orderId && s.orderId.toLowerCase().includes(q)) ||
-      (s.customer && s.customer.toLowerCase().includes(q)) ||
-      (s.address && s.address.toLowerCase().includes(q))
+      (o.id && o.id.toLowerCase().includes(q)) ||
+      (o.customerName && o.customerName.toLowerCase().includes(q)) ||
+      (o.supplierName && o.supplierName.toLowerCase().includes(q))
     );
   });
+
+  const formatCurrency = (n) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n || 0);
+
+  const formatDate = (d) => {
+    if (!d) return "—";
+    return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  };
+  const statusClass = (s) => (s || "").toLowerCase();
 
   return (
     <div>
@@ -55,55 +60,59 @@ function ShipmentsManagementPage({ searchQuery, onNavigate }) {
           <table>
             <thead>
               <tr>
-                <th>
-                  ORDER ID
-                </th>
-                <th>
-                  CUSTOMER NAME
-                </th>
-                <th>
-                  ADDRESS
-                </th>
-                <th>
-                  ACTION
-                </th>
+                <th>Order ID</th>
+                <th>Customer Name</th>
+                <th>Supplier Name</th>
+                <th>Items</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              {filteredShipments.length === 0 && shipments.length > 0 ? (
+              {loading ? (
+                <tr><td colSpan="9" style={{ textAlign: "center", padding: "2rem" }}>Loading...</td></tr>
+              ) : filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan="4" style={{ textAlign: "center", padding: "2rem" }}>
+                  <td colSpan="9" style={{ textAlign: "center", padding: "2rem" }}>
                     No shipments found for "{searchQuery}"
                   </td>
                 </tr>
               ) : (
-                filteredShipments.map((s, idx) =>
-                  <tr key={idx}>
-                    <td
-                      className="font-medium"
-                      style={{ color: "var(--primary)", fontWeight: "600" }}>
-                      {s.orderId}
+                filteredOrders.map((o) => (
+                  <tr key={o.id}>
+                    <td className="font-medium" style={{ fontFamily: "monospace", fontSize: "0.8125rem" }}>
+                      {o.id}
+                    </td>
+                    <td className="font-medium">{o.customerName}</td>
+                    <td>{o.supplierName}</td>
+                    <td>{o.items ? o.items.map(i => i.name).join(", ") : "—"}</td>
+                    <td>{o.items ? o.items.reduce((sum, i) => sum + i.quantity, 0) : 0}</td>
+                    <td className="font-medium">{formatCurrency(o.totalAmount)}</td>
+                    <td>{formatDate(o.createdAt)}</td>
+                    <td>
+                      <span className={`status-badge ${statusClass(o.orderStatus)}`}>
+                        {o.orderStatus}
+                      </span>
                     </td>
                     <td>
-                      {s.customer}
+                      {o.orderStatus !== "SHIPPED" && o.orderStatus !== "DELIVERED" && (
+                        <button
+                          className="btn btn-primary"
+                          style={{
+                            padding: "0.375rem 1rem",
+                            fontSize: "0.8125rem",
+                            borderRadius: "0.375rem",
+                          }}
+                          onClick={() => markShipped(o.id)}>
+                          Mark as Shipped
+                        </button>
+                      )}
                     </td>
-                    <td>
-                      {s.address}
-                    </td>
-                    <td>
-                      <button
-                        className="btn btn-primary"
-                        style={{
-                          padding: "0.375rem 1rem",
-                          fontSize: "0.8125rem",
-                          borderRadius: "0.375rem",
-                        }}
-                        onClick={() => markShipped(idx)}>
-                        Mark as Shipped
-                      </button>
-                    </td>
-                  </tr>,
-                )
+                  </tr>
+                ))
               )}
             </tbody>
           </table>

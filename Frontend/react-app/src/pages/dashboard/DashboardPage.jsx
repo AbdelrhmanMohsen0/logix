@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useInventory } from '../../context/InventoryContext';
+import { OrderAPI } from '../../services/api';
 
 function DashboardPage({ searchQuery, onNavigate }) {
   const { user } = useAuth();
@@ -8,6 +9,11 @@ function DashboardPage({ searchQuery, onNavigate }) {
   const lowStockItems = items.filter(i => i.qty < 50);
   const [timeRange, setTimeRange] = useState("Last 30 Days");
   const [hoveredBar, setHoveredBar] = useState(null);
+  const [orders, setOrders] = useState([]);
+  
+  React.useEffect(() => {
+    OrderAPI.getOrders().then(data => setOrders(data.slice(0, 4)));
+  }, []);
 
   const chartData = {
     "Last 30 Days": {
@@ -69,65 +75,32 @@ function DashboardPage({ searchQuery, onNavigate }) {
       action: "Review items →",
     },
   ];
-  const recentActivity = [
-    {
-      id: "#TRK-89241",
-      status: "Delivered",
-      statusClass: "delivered",
-      dest: "New York, NY",
-      date: "Oct 24, 14:30",
-    },
-    {
-      id: "#TRK-89240",
-      status: "In Transit",
-      statusClass: "in-transit",
-      dest: "Chicago, IL",
-      date: "Oct 24, 09:15",
-    },
-    {
-      id: "#TRK-89239",
-      status: "Delayed",
-      statusClass: "delayed",
-      dest: "Austin, TX",
-      date: "Oct 23, 16:45",
-    },
-    {
-      id: "#TRK-89238",
-      status: "Processing",
-      statusClass: "processing",
-      dest: "Seattle, WA",
-      date: "Oct 23, 11:20",
-    },
-  ];
+  
   const inventoryDist = [
-    {
-      label: "Electronics",
-      pct: 45,
-    },
-    {
-      label: "Apparel",
-      pct: 30,
-    },
-    {
-      label: "Home Goods",
-      pct: 15,
-    },
-    {
-      label: "Other",
-      pct: 10,
-    },
+    { label: "Electronics", pct: 45 },
+    { label: "Apparel", pct: 30 },
+    { label: "Home Goods", pct: 15 },
+    { label: "Other", pct: 10 },
   ];
 
-  const filteredActivity = recentActivity.filter(row => {
+  const filteredActivity = orders.filter(row => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return (
-      row.id.toLowerCase().includes(q) ||
-      row.status.toLowerCase().includes(q) ||
-      row.dest.toLowerCase().includes(q) ||
-      row.date.toLowerCase().includes(q)
+      (row.id && row.id.toLowerCase().includes(q)) ||
+      (row.customerName && row.customerName.toLowerCase().includes(q)) ||
+      (row.supplierName && row.supplierName.toLowerCase().includes(q))
     );
   });
+  
+  const formatCurrency = (n) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n || 0);
+
+  const formatDate = (d) => {
+    if (!d) return "—";
+    return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  };
+  const statusClass = (s) => (s || "").toLowerCase();
 
   return (
     <div>
@@ -409,70 +382,53 @@ function DashboardPage({ searchQuery, onNavigate }) {
           <table>
             <thead>
               <tr>
-                <th>
-                  Tracking ID
-                </th>
-                <th>
-                  Status
-                </th>
-                <th>
-                  Destination
-                </th>
-                <th>
-                  Date
-                </th>
-                <th
-                  style={{
-                    textAlign: "right",
-                  }}>
-                  Action
-                </th>
+                <th>Order ID</th>
+                <th>Customer Name</th>
+                <th>Supplier Name</th>
+                <th>Items</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th style={{ textAlign: "right" }}>Action</th>
               </tr>
             </thead>
             <tbody>
               {filteredActivity.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: "center", padding: "1rem" }}>
+                  <td colSpan="9" style={{ textAlign: "center", padding: "1rem" }}>
                     No results found for "{searchQuery}"
                   </td>
                 </tr>
               ) : (
-                filteredActivity.map((row, i) =>
+                filteredActivity.map((row, i) => (
                   <tr key={i}>
-                    <td className="font-medium">
+                    <td className="font-medium" style={{ fontFamily: "monospace", fontSize: "0.8125rem" }}>
                       {row.id}
                     </td>
+                    <td className="font-medium">{row.customerName}</td>
+                    <td>{row.supplierName}</td>
+                    <td>{row.items ? row.items.map(it => it.name).join(", ") : "—"}</td>
+                    <td>{row.items ? row.items.reduce((sum, it) => sum + it.quantity, 0) : 0}</td>
+                    <td className="font-medium">{formatCurrency(row.totalAmount)}</td>
+                    <td>{formatDate(row.createdAt)}</td>
                     <td>
-                      <span className={`status-badge ${row.statusClass}`}>
-                        {row.status}
+                      <span className={`status-badge ${statusClass(row.orderStatus)}`}>
+                        {row.orderStatus}
                       </span>
                     </td>
-                    <td>
-                      {row.dest}
-                    </td>
-                    <td>
-                      {row.date}
-                    </td>
-                    <td
-                      style={{
-                        textAlign: "right",
-                      }}>
+                    <td style={{ textAlign: "right" }}>
                       <button
                         className="btn-ghost"
-                        style={{
-                          padding: "0.25rem",
-                        }}>
-                        <span
-                          className="material-symbols-outlined"
-                          style={{
-                            fontSize: "1.125rem",
-                          }}>
+                        style={{ padding: "0.25rem" }}
+                        onClick={() => onNavigate("order-details:" + row.id)}>
+                        <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
                           visibility
                         </span>
                       </button>
                     </td>
-                  </tr>,
-                )
+                  </tr>
+                ))
               )}
             </tbody>
           </table>

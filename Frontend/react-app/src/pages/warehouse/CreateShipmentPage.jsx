@@ -1,4 +1,5 @@
 import React from 'react';
+import { OrderAPI } from '../../services/api';
 
 function CreateShipmentPage({ onNavigate }) {
   
@@ -7,10 +8,17 @@ function CreateShipmentPage({ onNavigate }) {
     carrier: "FedEx",
     weight: "",
   });
-  const handleSubmit = (e) => {
+  const [error, setError] = React.useState("");
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("Mock Shipment Created! Tracking: 1Z9999999999999999");
-    onNavigate("shipments");
+    try {
+      await OrderAPI.updateOrderStatus(form.orderId, "SHIPPED");
+      alert("Shipment Created! Status updated to SHIPPED.");
+      onNavigate("shipments");
+    } catch (err) {
+      setError(err.message || "Failed to update order status.");
+    }
   };
   return (
     <div>
@@ -25,6 +33,7 @@ function CreateShipmentPage({ onNavigate }) {
         </div>
       </div>
       <div className="card" style={{ maxWidth: "600px", padding: "2rem" }}>
+        {error && <div className="alert alert-error" style={{ marginBottom: "1rem" }}>{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>
