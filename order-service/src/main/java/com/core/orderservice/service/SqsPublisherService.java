@@ -8,17 +8,16 @@ import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import org.springframework.stereotype.Service;
 
-@Service
+//@Service
 @RequiredArgsConstructor
 public class SqsPublisherService {
-	
 	private final SqsClient sqsClient;
 	private final ObjectMapper objectMapper;
-	
+
 	public void sendMessage(String queueName, OrderDTO order){
-		
+
 		String message = objectMapper.writeValueAsString(order);
-		
+
 		String queueUrl = sqsClient.getQueueUrl(
 				GetQueueUrlRequest.builder().queueName(queueName).build()
 		).queueUrl();
@@ -29,7 +28,7 @@ public class SqsPublisherService {
 						.messageBody(message)
 						.build()
 		);
-		
+
 	}
 	
 }

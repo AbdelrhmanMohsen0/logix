@@ -29,7 +29,8 @@ public class OrderService {
 	
 	private final OrderRepo orderRepo;
 	private final ObjectMapper objectMapper;
-	private final SqsPublisherService sqsPublisherService;
+//	private final SqsPublisherService sqsPublisherService;
+
 	
 	@Transactional
 	public OrderDTO createOrder(OrderRequest request, UUID organizationId) {
@@ -59,7 +60,7 @@ public class OrderService {
 		
 		OrderDTO savedOrderDTO = toDetailDTO(savedOrder);
 		
-		sqsPublisherService.sendMessage("order.created", savedOrderDTO);
+//		sqsPublisherService.sendMessage("order.created", savedOrderDTO);
 		
 		return savedOrderDTO;
 	}
@@ -91,13 +92,12 @@ public class OrderService {
 		return toDetailDTO(order);
 	}
 	
-	@SqsListener("order-status-updated-queue")
-	public void handleUpdate(String message) {
-		OrderStatusUpdateDTO updateDTO = objectMapper.readValue(message, OrderStatusUpdateDTO.class);
-		changeStatus(updateDTO);
+	@SqsListener("OrderServiceQueue.fifo")
+	public void listen(OrderStatusUpdateDTO message) {
+		changeStatus(message);
 		
 		//todo: remove this after testing
-		System.out.println("Received: " + updateDTO);
+		System.out.println("Received: " + message);
 	}
 	
 	private OrderDTO toDetailDTO(Order order) {
