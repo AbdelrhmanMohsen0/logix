@@ -1,10 +1,12 @@
 package com.core.orderservice.model;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import com.core.orderservice.domain.OrderStatus;
+import com.core.orderservice.dto.OrderStatusUpdateDTO;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -18,6 +20,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.transaction.annotation.Transactional;
 
 @Entity
 @Getter
@@ -52,19 +55,19 @@ public class Order {
 	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<OrderStatusHistory> statusHistory = new ArrayList<>();
 	
-	public void updateStatus(OrderStatus newStatus) {
-		this.currentStatus = newStatus;
+	@Transactional
+	public void updateStatus(OrderStatusUpdateDTO statusHistory) {
+		this.currentStatus = statusHistory.nextStatus();
 		
 		OrderStatusHistory history = new OrderStatusHistory();
 		history.setOrder(this);
-		history.setStatus(newStatus);
-		
+		history.setStatus(statusHistory.nextStatus());
+		history.setTransitionedAt(statusHistory.transitionedAt());
 		this.statusHistory.add(history);
 	}
 	
-	public void addStatusHistory(OrderStatusHistory history) {
-		this.statusHistory.add(history);
-		history.setOrder(this);
+	public void addStatusHistory(OrderStatusHistory statusHistory) {
+		this.statusHistory.add(statusHistory);
 	}
 	
 	public void addItem(Item item) {
