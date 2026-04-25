@@ -48,17 +48,7 @@ public class Order {
 	
 	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<OrderStatusState> statusHistory = new ArrayList<>();
-	
-//	@Transactional
-//	public void updateStatus(OrderStatusUpdateDTO statusHistoryDTO) {
-//		this.currentStatus = statusHistoryDTO.nextStatus();
-//
-//		OrderStatusState newState = new OrderStatusState();
-//		newState.setOrder(this);
-//		newState.setStatus(statusHistoryDTO.nextStatus());
-//		this.statusHistory.add(newState);
-//	}
-	
+
 	public void addStatusHistory(OrderStatusState orderStatusState) {
 		this.statusHistory.add(orderStatusState);
 	}

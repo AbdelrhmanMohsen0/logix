@@ -14,5 +14,5 @@ public record OrderDTO(
 		OrderStatus orderCurrentStatus,
 		BigDecimal totalAmount,
 		List<@Valid ItemDTO> items,
-		List<StatusHistoryDTO> statusHistory
+		List<OrderStatusStateDTO> statusHistory
 ) {}

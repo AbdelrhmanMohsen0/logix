@@ -2,7 +2,7 @@ package com.core.orderservice.mapper;
 
 import com.core.orderservice.dto.ItemDTO;
 import com.core.orderservice.dto.OrderDTO;
-import com.core.orderservice.dto.StatusHistoryDTO;
+import com.core.orderservice.dto.OrderStatusStateDTO;
 import com.core.orderservice.model.Order;
 import com.core.orderservice.model.OrderStatusState;
 import org.springframework.stereotype.Component;
@@ -15,9 +15,9 @@ import java.util.List;
 public class OrderMapper {
 
     public OrderDTO toOrderDTO(Order order) {
-        List<StatusHistoryDTO> historyDTOs = order.getStatusHistory().stream()
+        List<OrderStatusStateDTO> historyDTOs = order.getStatusHistory().stream()
                 .sorted(Comparator.comparing(OrderStatusState::getTransitionedAt, Comparator.nullsLast(Instant::compareTo)))
-                .map(h -> new StatusHistoryDTO(h.getStatus(), h.getTransitionedAt()))
+                .map(h -> new OrderStatusStateDTO(h.getStatus(), h.getTransitionedAt()))
                 .toList();
 
         List<ItemDTO> itemDTOs = order.getItems().stream()

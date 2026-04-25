@@ -59,17 +59,19 @@ public class OrderService {
 		return orderDTO;
 	}
 	
-//	@Transactional
-//	protected void changeStatus(@Valid OrderStatusUpdateDTO statusUpdateDTO) {
-//		Order order;
-//		try {
-//			order = orderRepo.findByOrderId(statusUpdateDTO.orderId());
-//		} catch (OrderNotFoundException e) {
-//			throw new OrderNotFoundException(statusUpdateDTO.orderId());
-//		}
-//		order.updateStatus(statusUpdateDTO);
-//		orderRepo.save(order);
-//	}
+	@Transactional
+    public void changeStatus(UUID orderId, OrderStatus newStatus) {
+		Order order = orderRepo.findByOrderId(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
+
+		OrderStatusState newState = new OrderStatusState();
+		newState.setOrder(order);
+		newState.setStatus(newStatus);
+
+		order.addStatusHistory(newState);
+		order.setCurrentStatus(newStatus);
+
+		orderRepo.save(order);
+	}
 	
 	public List<OrderSummaryDTO> getOrderSummaries(UUID organizationId) {
 		return orderRepo.findAllSummariesByOrg(organizationId);
@@ -82,11 +84,5 @@ public class OrderService {
 		return orderMapper.toOrderDTO(order);
 	}
 	
-//	@SqsListener("OrderServiceQueue.fifo")
-//	public void listen(OrderStatusUpdateDTO message) {
-//		changeStatus(message);
-//
-//		//todo: remove this after testing
-//		System.out.println("Received: " + message);
-//	}
+
 }
