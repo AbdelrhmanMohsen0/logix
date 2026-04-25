@@ -39,7 +39,7 @@ function SignupPage({ onNavigate }) {
     setError("");
     try {
       await signup(form);
-      onNavigate("login");
+      onNavigate("dashboard");
     } catch (err) {
       setError(err.message || "Signup failed. Please try again.");
     } finally {

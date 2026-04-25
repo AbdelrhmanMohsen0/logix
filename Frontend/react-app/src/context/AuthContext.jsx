@@ -38,7 +38,14 @@ export function AuthProvider({ children }) {
     return u;
   }, []);
   const signup = React.useCallback(async (formData) => {
-    return await AuthAPI.signup(formData);
+    const data = await AuthAPI.signup(formData);
+    const jwt = data.token;
+    TokenService.set(jwt);
+    setToken(jwt);
+    // Fetch profile from backend as specified in docs
+    const u = await UserAPI.getUserMe();
+    setUser(u);
+    return u;
   }, []);
   const logout = React.useCallback(() => {
     TokenService.remove();
