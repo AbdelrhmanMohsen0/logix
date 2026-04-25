@@ -86,22 +86,7 @@ function EditUserPage({ userId, onNavigate }) {
           </p>
         </div>
       </div>
-      <div
-        className="alert alert-info"
-        style={{
-          marginBottom: "1.5rem",
-        }}>
-        <span
-          className="material-symbols-outlined"
-          style={{
-            fontSize: "1rem",
-          }}>
-          info
-        </span>
-        Mock mode — PUT /users/
-        {userId}
-        {" endpoint is not yet implemented in the backend."}
-      </div>
+
       <div
         className="card"
         style={{

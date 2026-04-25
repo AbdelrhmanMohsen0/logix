@@ -1,342 +1,126 @@
-const API_BASE_AUTH = "http://localhost:8081";
-const API_BASE_ORDER = "http://localhost:8082";
-let _token = null;
+import axios from 'axios';
+
+const API_BASE_AUTH = "http://127.0.0.1:8081";
+const API_BASE_ORDER = "http://127.0.0.1:8082";
+const API_BASE_INVENTORY = "http://127.0.0.1:8083";
+const API_BASE_WAREHOUSE = "http://127.0.0.1:8084";
+
+/* -------- Token helpers -------- */
 export const TokenService = {
   get() {
-    return _token;
+    return localStorage.getItem("logix_token");
   },
   set(t) {
-    _token = t;
+    localStorage.setItem("logix_token", t);
   },
   remove() {
-    _token = null;
+    localStorage.removeItem("logix_token");
   },
 };
-/* -------- Generic fetch wrapper -------- */
-async function apiFetch(baseUrl, path, options = {}) {
-  const token = TokenService.get();
-  const headers = {
-    "Content-Type": "application/json",
-    ...options.headers,
-  };
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-  const res = await fetch(`${baseUrl}${path}`, {
-    ...options,
-    headers,
-  });
-  if (!res.ok) {
-    let msg = `Request failed (${res.status})`;
-    try {
-      const body = await res.json();
-      msg = body.message || body.error || JSON.stringify(body);
-    } catch (_) {
-      /* ignore parse error */
-    }
-    throw new Error(msg);
-  }
-  const text = await res.text();
-  return text ? JSON.parse(text) : null;
-}
-/* ======== AUTH SERVICE ======== */
-let _registeredCompanies = [];
 
+/* -------- Axios Instances -------- */
+const createClient = (baseURL) => {
+  const client = axios.create({
+    baseURL,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  client.interceptors.request.use((config) => {
+    const token = TokenService.get();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  });
+
+  client.interceptors.response.use(
+    (response) => response.data,
+    (error) => {
+      // Extract detailed error messages if available
+      let message = error.message;
+      if (error.response?.data) {
+        const data = error.response.data;
+        message = data.message || data.error || message;
+
+        // If there are specific validation errors, append them
+        if (Array.isArray(data.errors)) {
+          const detail = data.errors.map(e => `${e.field}: ${e.message}`).join(", ");
+          message = `${message} (${detail})`;
+        }
+      }
+      return Promise.reject(new Error(message));
+    }
+  );
+
+  return client;
+};
+
+const authClient = createClient(API_BASE_AUTH);
+const orderClient = createClient(API_BASE_ORDER);
+const inventoryClient = createClient(API_BASE_INVENTORY);
+const warehouseClient = createClient(API_BASE_WAREHOUSE);
+
+/* ======== AUTH SERVICE ======== */
 export const AuthAPI = {
   async login(email, password) {
-    await _delay(500);
-    const payload = btoa(JSON.stringify({ sub: email, role: "ROLE_OWNER" }));
-    return { token: `mock.${payload}.sig` };
+    return authClient.post("/login", { email, password });
   },
-  async signup({ organizationName, email, adminName, password }) {
-    await _delay(500);
-    if (_registeredCompanies.includes(organizationName)) {
-      throw new Error("Company already registered");
-    }
-    _registeredCompanies.push(organizationName);
-    const payload = btoa(JSON.stringify({ sub: email, name: adminName, role: "ROLE_OWNER" }));
-    return { token: `mock.${payload}.sig` };
+  async signup(data) {
+    return authClient.post("/signup", data);
   },
 };
-/* ======== USER SERVICE (MOCK — backend endpoints not yet implemented) ======== */
-let _mockUsers = [
-  {
-    id: "1",
-    name: "Alex Carter",
-    email: "alex@logix.io",
-    role: "ROLE_OWNER",
-    createdAt: "2025-01-15T10:00:00Z",
-  },
-  {
-    id: "2",
-    name: "Jordan Lee",
-    email: "jordan@logix.io",
-    role: "ROLE_ADMIN",
-    createdAt: "2025-02-20T14:30:00Z",
-  },
-  {
-    id: "3",
-    name: "Sam Rivera",
-    email: "sam@logix.io",
-    role: "ROLE_MANAGER",
-    createdAt: "2025-03-10T09:15:00Z",
-  },
-  {
-    id: "4",
-    name: "Morgan Chen",
-    email: "morgan@logix.io",
-    role: "ROLE_SALES",
-    createdAt: "2025-04-05T11:45:00Z",
-  },
-  {
-    id: "5",
-    name: "Taylor Kim",
-    email: "taylor@logix.io",
-    role: "ROLE_WORKER",
-    createdAt: "2025-05-18T08:20:00Z",
-  },
-];
-let _nextUserId = 6;
+
+/* ======== USER SERVICE ======== */
 export const UserAPI = {
   async getUsers() {
-    await _delay(400);
-    return [..._mockUsers];
+    return authClient.get("/users");
+  },
+  async getUserMe() {
+    return authClient.get("/users/me");
   },
   async getUser(id) {
-    await _delay(300);
-    const user = _mockUsers.find((u) => u.id === id);
-    if (!user) throw new Error("User not found");
-    return {
-      ...user,
-    };
+    return authClient.get(`/users/${id}`);
   },
   async createUser(data) {
-    await _delay(500);
-    const newUser = {
-      id: String(_nextUserId++),
-      ...data,
-      createdAt: new Date().toISOString(),
-    };
-    _mockUsers.push(newUser);
-    return {
-      ...newUser,
-    };
+    return authClient.post("/users", data);
   },
   async updateUser(id, data) {
-    await _delay(400);
-    const idx = _mockUsers.findIndex((u) => u.id === id);
-    if (idx === -1) throw new Error("User not found");
-    _mockUsers[idx] = {
-      ..._mockUsers[idx],
-      ...data,
-    };
-    return {
-      ..._mockUsers[idx],
-    };
+    return authClient.put(`/users/${id}`, data);
   },
   async deleteUser(id) {
-    await _delay(400);
-    _mockUsers = _mockUsers.filter((u) => u.id !== id);
-    return null;
+    return authClient.delete(`/users/${id}`);
   },
 };
+
 /* ======== ORDER SERVICE ======== */
-let _mockOrders = [
-  {
-    id: "ORDER-001",
-    customerName: "Acme Corp",
-    supplierName: "LogiX Supplier",
-    customerPhone: "+1-555-0100",
-    customerAddress: "123 Business Ave, New York, NY 10001",
-    orderStatus: "DELIVERED",
-    totalAmount: 2499.97,
-    items: [
-      {
-        SKU: "ELEC-001",
-        name: "Wireless Keyboard",
-        quantity: 3,
-        priceAtPurchase: 79.99,
-      },
-      {
-        SKU: "ELEC-002",
-        name: "4K Monitor",
-        quantity: 2,
-        priceAtPurchase: 1129.99,
-      },
-    ],
-    statusHistory: [
-      {
-        status: "PENDING",
-        transitionedAt: "2025-10-20T09:00:00Z",
-      },
-
-      {
-        status: "PACKED",
-        transitionedAt: "2025-10-21T08:00:00Z",
-      },
-      {
-        status: "SHIPPED",
-        transitionedAt: "2025-10-21T14:00:00Z",
-      },
-      {
-        status: "DELIVERED",
-        transitionedAt: "2025-10-24T11:30:00Z",
-      },
-    ],
-    createdAt: "2025-10-20T09:00:00Z",
-  },
-  {
-    id: "ORDER-002",
-    customerName: "TechStart Ltd",
-    supplierName: "LogiX Supplier",
-    customerPhone: "+1-555-0200",
-    customerAddress: "456 Innovation Blvd, Chicago, IL 60601",
-    orderStatus: "SHIPPED",
-    totalAmount: 649.95,
-    items: [
-      {
-        SKU: "OFF-010",
-        name: "Ergonomic Chair",
-        quantity: 5,
-        priceAtPurchase: 129.99,
-      },
-    ],
-    statusHistory: [
-      {
-        status: "PENDING",
-        transitionedAt: "2025-10-22T11:00:00Z",
-      },
-
-      {
-        status: "PACKED",
-        transitionedAt: "2025-10-23T09:00:00Z",
-      },
-      {
-        status: "SHIPPED",
-        transitionedAt: "2025-10-23T15:00:00Z",
-      },
-    ],
-    createdAt: "2025-10-22T11:00:00Z",
-  },
-  {
-    id: "ORDER-003",
-    customerName: "Global Supplies Inc",
-    supplierName: "LogiX Supplier",
-    customerPhone: "+1-555-0300",
-    customerAddress: "789 Commerce St, Austin, TX 73301",
-    orderStatus: "PENDING",
-    totalAmount: 189.97,
-    items: [
-      {
-        SKU: "STAT-005",
-        name: "Notebook Bundle",
-        quantity: 1,
-        priceAtPurchase: 49.99,
-      },
-      {
-        SKU: "STAT-008",
-        name: "Pen Set Premium",
-        quantity: 2,
-        priceAtPurchase: 34.99,
-      },
-      {
-        SKU: "STAT-012",
-        name: "Desk Organizer",
-        quantity: 1,
-        priceAtPurchase: 69.99,
-      },
-    ],
-    statusHistory: [
-      {
-        status: "PENDING",
-        transitionedAt: "2025-10-24T14:00:00Z",
-      },
-    ],
-    createdAt: "2025-10-24T14:00:00Z",
-  },
-  {
-    id: "ORDER-004",
-    customerName: "Redwood Partners",
-    supplierName: "LogiX Supplier",
-    customerPhone: "+1-555-0400",
-    customerAddress: "321 Oak Rd, Seattle, WA 98101",
-    orderStatus: "PENDING",
-    totalAmount: 3450.0,
-    items: [
-      {
-        SKU: "FURN-020",
-        name: "Standing Desk",
-        quantity: 10,
-        priceAtPurchase: 345.0,
-      },
-    ],
-    statusHistory: [
-      {
-        status: "PENDING",
-        transitionedAt: "2025-10-25T08:00:00Z",
-      },
-    ],
-    createdAt: "2025-10-25T08:00:00Z",
-  },
-];
-let _nextMockOrderId = 5;
 export const OrderAPI = {
   async createOrder(data) {
-    await _delay(500);
-    const total = data.items.reduce(
-      (s, i) => s + i.quantity * i.priceAtPurchase,
-      0,
-    );
-    const newOrder = {
-      id: `ORDER-${String(_nextMockOrderId++).padStart(3, '0')}`,
-      supplierName: data.supplierName || "LogiX Supplier",
-      ...data,
-      orderStatus: "PENDING",
-      totalAmount: total,
-      statusHistory: [
-        {
-          status: "PENDING",
-          transitionedAt: new Date().toISOString(),
-        },
-      ],
-      createdAt: new Date().toISOString(),
-    };
-    _mockOrders.unshift(newOrder);
-    return newOrder;
+    return orderClient.post("/order", data);
   },
   async getOrders() {
-    await _delay(400);
-    return [..._mockOrders];
+    return orderClient.get("/orders");
   },
   async getOrder(id) {
-    await _delay(300);
-    const order = _mockOrders.find((o) => o.id === id);
-    if (!order) throw new Error("Order not found");
-    return {
-      ...order,
-    };
+    return orderClient.get(`/order/${id}`);
   },
   async updateOrderStatus(id, status) {
-    await _delay(400);
-    const order = _mockOrders.find((o) => o.id === id);
-    if (!order) throw new Error("Order not found");
-    
-    if (status === "PACKED" && order.orderStatus !== "IN_PROGRESS") {
-      throw new Error("Order must be marked as IN_PROGRESS before it can be packed.");
-    }
-
-    order.orderStatus = status;
-    order.statusHistory.push({
-      status,
-      transitionedAt: new Date().toISOString(),
-    });
-    return {
-      ...order,
-    };
+    return orderClient.put(`/order/${id}/status`, { status });
   },
 };
+
+/* ======== INVENTORY SERVICE ======== */
+export const InventoryAPI = {
+  async getItems() {
+    return inventoryClient.get("/inventory");
+  },
+  async updateStock(id, qty) {
+    return inventoryClient.patch(`/inventory/${id}`, { qty });
+  },
+};
+
 /* -------- Helpers -------- */
-function _delay(ms) {
-  return new Promise((r) => setTimeout(r, ms));
-}
 export function parseJwt(token) {
   try {
     const base64Url = token.split(".")[1];

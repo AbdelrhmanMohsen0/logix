@@ -103,20 +103,7 @@ function UserListPage({ searchQuery, onNavigate }) {
           </span>
           {error}
         </div>}
-      <div
-        className="alert alert-info"
-        style={{
-          marginBottom: "1.5rem",
-        }}>
-        <span
-          className="material-symbols-outlined"
-          style={{
-            fontSize: "1rem",
-          }}>
-          info
-        </span>
-        User data is simulated. Backend GET/POST/PUT/DELETE /users endpoints are not yet implemented.
-      </div>
+
       {loading
         ? <div className="loading-center">
         <div className="spinner spinner-lg" />

@@ -1,5 +1,5 @@
 import React from 'react';
-import { TokenService, AuthAPI, parseJwt } from '../services/api';
+import { TokenService, AuthAPI, UserAPI } from '../services/api';
 
 const AuthContext = React.createContext(null);
 export function AuthProvider({ children }) {
@@ -9,31 +9,31 @@ export function AuthProvider({ children }) {
   React.useEffect(() => {
     const saved = TokenService.get();
     if (saved) {
-      const payload = parseJwt(saved);
-      if (payload) {
-        setUser({
-          email: payload.sub || payload.email || "user@logix.io",
-          name: payload.name || payload.sub || "LogiX User",
-          role: payload.role || "ROLE_ADMIN",
-        });
-        setToken(saved);
-      } else {
-        TokenService.remove();
-      }
+      (async () => {
+        try {
+          const u = await UserAPI.getUserMe();
+          setUser(u);
+          setToken(saved);
+        } catch (err) {
+          console.warn("Session resumed failed or token expired:", err.message);
+          TokenService.remove();
+          setToken(null);
+          setUser(null);
+        } finally {
+          setLoading(false);
+        }
+      })();
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
   const login = React.useCallback(async (email, password) => {
     const data = await AuthAPI.login(email, password);
     const jwt = data.token;
     TokenService.set(jwt);
-    const payload = parseJwt(jwt);
-    const u = {
-      email: payload?.sub || email,
-      name: payload?.name || email.split("@")[0],
-      role: payload?.role || "ROLE_ADMIN",
-    };
     setToken(jwt);
+    // Fetch profile from backend as specified in docs
+    const u = await UserAPI.getUserMe();
     setUser(u);
     return u;
   }, []);
@@ -41,13 +41,9 @@ export function AuthProvider({ children }) {
     const data = await AuthAPI.signup(formData);
     const jwt = data.token;
     TokenService.set(jwt);
-    const payload = parseJwt(jwt);
-    const u = {
-      email: payload?.sub || formData.email,
-      name: payload?.name || formData.adminName,
-      role: payload?.role || "ROLE_OWNER",
-    };
     setToken(jwt);
+    // Fetch profile from backend as specified in docs
+    const u = await UserAPI.getUserMe();
     setUser(u);
     return u;
   }, []);

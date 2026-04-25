@@ -13,6 +13,7 @@
   "description": "",
   "dependencies": {
     "@vitejs/plugin-react": "^6.0.1",
+    "axios": "^1.15.2",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "vite": "^8.0.9"
