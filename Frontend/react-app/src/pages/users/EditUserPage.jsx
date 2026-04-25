@@ -63,6 +63,8 @@ function EditUserPage({ userId, onNavigate }) {
     "ROLE_SALES",
     "ROLE_WORKER",
   ];
+  const isOwner = original?.role === "ROLE_OWNER";
+  const selectableRoles = isOwner ? ["ROLE_OWNER", ...roles] : roles;
   if (loading) {
     return (
       <div className="loading-center">
@@ -161,13 +163,24 @@ function EditUserPage({ userId, onNavigate }) {
               className="form-input"
               name="role"
               value={form.role}
-              onChange={handleChange}>
-              {roles.map((r) =>
+              onChange={handleChange}
+              disabled={isOwner}
+              style={isOwner ? { opacity: 0.6, cursor: "not-allowed" } : {}}>
+              {selectableRoles.map((r) =>
                 <option key={r} value={r}>
                   {r.replace("ROLE_", "")}
                 </option>,
               )}
             </select>
+            {isOwner &&
+              <p
+                style={{
+                  fontSize: "0.75rem",
+                  color: "var(--outline)",
+                  marginTop: "0.25rem",
+                }}>
+                Owner role cannot be changed.
+              </p>}
           </div>
           <div
             style={{
