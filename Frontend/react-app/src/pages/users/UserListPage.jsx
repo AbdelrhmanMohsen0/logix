@@ -194,7 +194,7 @@ function UserListPage({ searchQuery, onNavigate }) {
                           edit
                         </span>
                       </button>
-                      {u.role !== 'ROLE_OWNER' && (
+                      {u.role !== 'ROLE_OWNER' && u.role !== 'OWNER' && (
                         <button
                           className="btn-ghost"
                           style={{

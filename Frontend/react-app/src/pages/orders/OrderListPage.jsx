@@ -74,20 +74,7 @@ function OrderListPage({ searchQuery, onNavigate }) {
           </button>
         </div>
       </div>
-      <div
-        className="alert alert-info"
-        style={{
-          marginBottom: "1.5rem",
-        }}>
-        <span
-          className="material-symbols-outlined"
-          style={{
-            fontSize: "1rem",
-          }}>
-          info
-        </span>
-        Order list uses simulated data. Backend GET /orders endpoint is not yet implemented.
-      </div>
+
       {error &&
         <div className="alert alert-error">
           <span
@@ -139,16 +126,7 @@ function OrderListPage({ searchQuery, onNavigate }) {
                   Customer Name
                 </th>
                 <th>
-                  Supplier Name
-                </th>
-                <th>
-                  Items
-                </th>
-                <th>
-                  Quantity
-                </th>
-                <th>
-                  Price
+                  Total Amount
                 </th>
                 <th>
                   Date
@@ -185,24 +163,15 @@ function OrderListPage({ searchQuery, onNavigate }) {
                     <td className="font-medium">
                       {o.customerName}
                     </td>
-                    <td>
-                      {o.supplierName}
-                    </td>
-                    <td>
-                      {o.items ? o.items.map(i => i.name).join(", ") : "—"}
-                    </td>
-                    <td>
-                      {o.items ? o.items.reduce((sum, i) => sum + i.quantity, 0) : 0}
-                    </td>
                     <td className="font-medium">
                       {formatCurrency(o.totalAmount)}
                     </td>
                     <td>
-                      {formatDate(o.createdAt)}
+                      {formatDate(o.orderDate)}
                     </td>
                     <td>
-                      <span className={`status-badge ${statusClass(o.orderStatus)}`}>
-                        {o.orderStatus}
+                      <span className={`status-badge ${statusClass(o.currentStatus)}`}>
+                        {o.currentStatus}
                       </span>
                     </td>
                     <td

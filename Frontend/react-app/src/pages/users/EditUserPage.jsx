@@ -4,7 +4,9 @@ import { AuthAPI, UserAPI, OrderAPI, TokenService } from '../../services/api';
 function EditUserPage({ userId, onNavigate }) {
   const [form, setForm] = React.useState({
     name: "",
+    email: "",
     role: "",
+    password: "",
   });
   const [original, setOriginal] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
@@ -20,7 +22,9 @@ function EditUserPage({ userId, onNavigate }) {
           setOriginal(user);
           setForm({
             name: user.name,
-            role: user.role,
+            email: user.email,
+            role: user.role.startsWith("ROLE_") ? user.role.substring(5) : user.role,
+            password: "", // User must provide a password for update as per backend DTO
           });
         }
       } catch (err) {
@@ -46,6 +50,14 @@ function EditUserPage({ userId, onNavigate }) {
       setError("Name is required.");
       return;
     }
+    if (!form.email.trim()) {
+      setError("Email is required.");
+      return;
+    }
+    if (!form.password || form.password.length < 8) {
+      setError("Password is required (min 8 characters).");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
@@ -58,13 +70,13 @@ function EditUserPage({ userId, onNavigate }) {
     }
   };
   const roles = [
-    "ROLE_ADMIN",
-    "ROLE_MANAGER",
-    "ROLE_SALES",
-    "ROLE_WORKER",
+    "ADMIN",
+    "MANAGER",
+    "SALES",
+    "WORKER",
   ];
-  const isOwner = original?.role === "ROLE_OWNER";
-  const selectableRoles = isOwner ? ["ROLE_OWNER", ...roles] : roles;
+  const isOwner = original?.role === "OWNER" || original?.role === "ROLE_OWNER";
+  const selectableRoles = isOwner ? ["OWNER", ...roles] : roles;
   if (loading) {
     return (
       <div className="loading-center">
@@ -125,18 +137,29 @@ function EditUserPage({ userId, onNavigate }) {
               id="eu-email"
               className="form-input"
               type="email"
-              value={original?.email || ""}
-              disabled={true}
-              style={{
-                opacity: 0.6,
-              }} />
+              name="email"
+              value={form.email}
+              onChange={handleChange} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="eu-password">
+              Password
+            </label>
+            <input
+              id="eu-password"
+              className="form-input"
+              type="password"
+              name="password"
+              placeholder="Enter new or existing password"
+              value={form.password}
+              onChange={handleChange} />
             <p
               style={{
                 fontSize: "0.75rem",
                 color: "var(--outline)",
                 marginTop: "0.25rem",
               }}>
-              Email cannot be changed.
+              Backend requires password confirmation for all updates.
             </p>
           </div>
           <div className="form-group">
@@ -152,7 +175,7 @@ function EditUserPage({ userId, onNavigate }) {
               disabled={isOwner}
               style={isOwner ? { opacity: 0.6, cursor: "not-allowed" } : {}}>
               {selectableRoles.map((r) =>
-                <option key={r} value={r}>
+                <option key={r} value={r.startsWith("ROLE_") ? r : "ROLE_" + r}>
                   {r.replace("ROLE_", "")}
                 </option>,
               )}

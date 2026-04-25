@@ -62,6 +62,22 @@ const orderClient = createClient(API_BASE_ORDER);
 const inventoryClient = createClient(API_BASE_INVENTORY);
 const warehouseClient = createClient(API_BASE_WAREHOUSE);
 
+// Special interceptor for services requiring Organization ID
+orderClient.interceptors.request.use((config) => {
+  const token = TokenService.get();
+  if (token) {
+    try {
+      const decoded = parseJwt(token);
+      if (decoded && decoded.org) {
+        config.headers["X-Organization-ID"] = decoded.org;
+      }
+    } catch (e) {
+      console.error("Failed to parse org ID from token", e);
+    }
+  }
+  return config;
+});
+
 /* ======== AUTH SERVICE ======== */
 export const AuthAPI = {
   async login(email, password) {
@@ -100,13 +116,13 @@ export const OrderAPI = {
     return orderClient.post("/order", data);
   },
   async getOrders() {
-    return orderClient.get("/orders");
+    return orderClient.get("/");
   },
   async getOrder(id) {
-    return orderClient.get(`/order/${id}`);
+    return orderClient.get(`/${id}`);
   },
   async updateOrderStatus(id, status) {
-    return orderClient.put(`/order/${id}/status`, { status });
+    return orderClient.put(`/${id}/status`, { status });
   },
 };
 
