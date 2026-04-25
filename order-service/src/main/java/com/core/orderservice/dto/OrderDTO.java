@@ -11,7 +11,7 @@ public record OrderDTO(
 		String customerName,
 		String customerPhone,
 		String customerAddress,
-		OrderStatus orderStatus,
+		OrderStatus orderCurrentStatus,
 		BigDecimal totalAmount,
 		List<@Valid ItemDTO> items,
 		List<StatusHistoryDTO> statusHistory

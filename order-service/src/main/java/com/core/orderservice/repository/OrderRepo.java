@@ -1,15 +1,10 @@
 package com.core.orderservice.repository;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import com.core.orderservice.dto.OrderDTO;
 import com.core.orderservice.dto.OrderSummaryDTO;
-import com.core.orderservice.exception.OrderNotFoundException;
 import com.core.orderservice.model.Order;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,8 +24,8 @@ public interface OrderRepo extends JpaRepository<Order, UUID> {
 	List<OrderSummaryDTO> findAllSummariesByOrg(@Param("orgId") UUID orgId);
 	
 	@Query("SELECT o FROM Order o LEFT JOIN FETCH o.items WHERE o.id = :id and o.organizationId = :orgId")
-	Order getOrderByOrganizationIdAndOrderId (UUID orgId, UUID id) throws OrderNotFoundException;
+	Optional<Order> getOrderByOrganizationIdAndOrderId (UUID orgId, UUID id);
 	
 	@Query("SELECT o FROM Order o LEFT JOIN FETCH o.items WHERE o.id = :id")
-	Order findByOrderId (UUID id) throws OrderNotFoundException;
+	Optional<Order> findByOrderId (UUID id);
 }
