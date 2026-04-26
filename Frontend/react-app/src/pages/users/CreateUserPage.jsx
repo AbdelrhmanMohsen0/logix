@@ -1,5 +1,6 @@
 import React from 'react';
 import { AuthAPI, UserAPI, OrderAPI, TokenService } from '../../services/api';
+import { validatePassword, PasswordRequirements } from '../../utils/passwordValidation';
 
 function CreateUserPage({ onNavigate }) {
   const [form, setForm] = React.useState({
@@ -18,10 +19,11 @@ function CreateUserPage({ onNavigate }) {
     setError("");
   };
   const validate = () => {
-    if (!form.name.trim()) return "Name is required.";
-    if (!form.email.trim()) return "Email is required.";
-    if (form.password.length < 8)
-      return "Password must be at least 8 characters.";
+    if (!form.name.trim()) return "User name is required";
+    if (!form.email.trim()) return "Email address is required";
+    const pwErrors = validatePassword(form.password);
+    if (pwErrors.length > 0) return pwErrors[0];
+    if (form.password.length > 30) return "Password must be between 8 and 30 characters";
     return "";
   };
   const handleSubmit = async (e) => {
@@ -135,6 +137,7 @@ function CreateUserPage({ onNavigate }) {
               value={form.password}
               onChange={handleChange}
               autoComplete="new-password" />
+            <PasswordRequirements password={form.password} />
           </div>
           <div
             style={{

@@ -2,6 +2,47 @@ import React from 'react';
 import { TokenService, AuthAPI, UserAPI } from '../services/api';
 
 const AuthContext = React.createContext(null);
+
+/* -------- Role normalizer -------- */
+const normalizeRole = (role) => {
+  if (!role) return '/login';
+  return role.startsWith('ROLE_') ? role : 'ROLE_' + role;
+};
+
+/* -------- RBAC access matrix -------- */
+const checkAccess = (user, page) => {
+  if (!user) return false;
+  const role = normalizeRole(user.role);
+
+  // Owner and Admin have full access
+  if (role === 'ROLE_OWNER' || role === 'ROLE_ADMIN') return true;
+
+  // Manager: all except user management
+  if (role === 'ROLE_MANAGER') {
+    const restricted = ['users', 'create-user', 'edit-user'];
+    return !restricted.includes(page);
+  }
+
+  // Sales: only orders (no dashboard)
+  if (role === 'ROLE_SALES') {
+    const allowed = ['orders', 'create-order', 'order-details'];
+    return allowed.includes(page);
+  }
+
+  // Worker: only warehouse (no dashboard)
+  if (role === 'ROLE_WORKER') {
+    const allowed = [
+      'warehouse-operations', 'inbound-shipments',
+      'add-received-shipment', 'picking-lists', 'picking-details',
+      'picking-management', 'shipments', 'create-shipment',
+      'warehouse-zones',
+    ];
+    return allowed.includes(page);
+  }
+
+  return false;
+};
+
 export function AuthProvider({ children }) {
   const [user, setUser] = React.useState(null);
   const [token, setToken] = React.useState(TokenService.get());
@@ -52,6 +93,7 @@ export function AuthProvider({ children }) {
     setToken(null);
     setUser(null);
   }, []);
+  const hasAccess = React.useCallback((page) => checkAccess(user, page), [user]);
   const isAuthenticated = !!token && !!user;
   const value = React.useMemo(
     () => ({
@@ -59,11 +101,12 @@ export function AuthProvider({ children }) {
       token,
       loading,
       isAuthenticated,
+      hasAccess,
       login,
       signup,
       logout,
     }),
-    [user, token, loading, isAuthenticated, login, signup, logout],
+    [user, token, loading, isAuthenticated, hasAccess, login, signup, logout],
   );
   return (
     <AuthContext.Provider value={value}>

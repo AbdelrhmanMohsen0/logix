@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { InventoryProvider } from './context/InventoryContext';
 import Layout from './components/Layout';
+import AccessDenied from './components/AccessDenied';
 import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
@@ -47,7 +48,7 @@ function App() {
   );
 }
 function AppRouter({ route, navigate }) {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, hasAccess, user } = useAuth();
   const [searchQuery, setSearchQuery] = React.useState("");
 
   React.useEffect(() => {
@@ -72,12 +73,27 @@ function AppRouter({ route, navigate }) {
     return <LoginPage onNavigate={navigate} />;
   }
   if (route === "login" || route === "signup") {
-    setTimeout(() => navigate("dashboard"), 0);
+    // Redirect to role-appropriate default page
+    const role = (user?.role || '').replace('ROLE_', '');
+    let defaultPage = 'dashboard';
+    if (role === 'SALES') defaultPage = 'orders';
+    if (role === 'WORKER') defaultPage = 'warehouse-operations';
+    setTimeout(() => navigate(defaultPage), 0);
     return null;
   }
   const colonIdx = route.indexOf(":");
   const routeBase = colonIdx > -1 ? route.substring(0, colonIdx) : route;
   const routeParam = colonIdx > -1 ? route.substring(colonIdx + 1) : null;
+
+  // RBAC check — show AccessDenied for any page the user cannot access
+  if (!hasAccess(routeBase)) {
+    return (
+      <Layout currentRoute={routeBase} onNavigate={navigate} searchQuery={searchQuery} setSearchQuery={setSearchQuery}>
+        <AccessDenied onNavigate={navigate} />
+      </Layout>
+    );
+  }
+
   const renderPage = () => {
     switch (routeBase) {
       case "dashboard":
@@ -147,3 +163,4 @@ function AppRouter({ route, navigate }) {
 
 
 export default App;
+

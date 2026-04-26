@@ -2,34 +2,18 @@ import React from 'react';
 import { useAuth } from '../context/AuthContext';
 
 function Navigation({ currentRoute, onNavigate, isOpen }) {
-  const { user, logout } = useAuth();
-  const navItems = [
-    {
-      id: "dashboard",
-      label: "Dashboard",
-      icon: "dashboard",
-    },
-    {
-      id: "orders",
-      label: "Orders",
-      icon: "shopping_cart",
-    },
-    {
-      id: "users",
-      label: "Users",
-      icon: "group",
-    },
-    {
-      id: "inventory",
-      label: "Inventory",
-      icon: "inventory_2",
-    },
-    {
-      id: "warehouse-operations",
-      label: "Warehouse",
-      icon: "warehouse",
-    },
+  const { user, logout, hasAccess } = useAuth();
+
+  const allNavItems = [
+    { id: "dashboard", label: "Dashboard", icon: "dashboard", page: "dashboard" },
+    { id: "orders", label: "Orders", icon: "shopping_cart", page: "orders" },
+    { id: "users", label: "Users", icon: "group", page: "users" },
+    { id: "inventory", label: "Inventory", icon: "inventory_2", page: "inventory" },
+    { id: "warehouse-operations", label: "Warehouse", icon: "warehouse", page: "warehouse-operations" },
   ];
+
+  const navItems = allNavItems.filter((item) => hasAccess(item.page));
+
   const handleLogout = () => {
     logout();
     onNavigate("login");
@@ -57,34 +41,20 @@ function Navigation({ currentRoute, onNavigate, isOpen }) {
         {navItems.map((item) =>
           <li
             key={item.id}
-            className={`nav-item${currentRoute === item.id || currentRoute.startsWith(item.id) ? " active" : ""}${item.disabled ? " disabled" : ""}`}>
+            className={`nav-item${currentRoute === item.id || currentRoute.startsWith(item.id) ? " active" : ""}`}>
             <a
               href="#"
               onClick={(e) => {
                 e.preventDefault();
-                if (!item.disabled) onNavigate(item.id);
+                onNavigate(item.id);
               }}
-              style={item.disabled
-                ? {
-                  opacity: 0.45,
-                  cursor: "default",
-                }
-                : {}}
-              title={item.disabled ? "Coming soon" : item.label}>
+              title={item.label}>
               <span className="material-symbols-outlined">
                 {item.icon}
               </span>
               <span>
                 {item.label}
               </span>
-              {item.disabled &&
-                <span
-                  style={{
-                    fontSize: "0.625rem",
-                    opacity: 0.7,
-                  }}>
-                  Soon
-                </span>}
             </a>
           </li>,
         )}
@@ -127,3 +97,4 @@ function Navigation({ currentRoute, onNavigate, isOpen }) {
 }
 
 export default Navigation;
+
