@@ -13,6 +13,7 @@ public class ProductMapper {
                 product.getSku(),
                 product.getQuantity(),
                 product.getPrice(),
+                product.getLocation(),
                 product.getThreshold()
         );
     }

@@ -82,13 +82,4 @@ public class Product {
 		}
 	}
 	
-	
-	@Override  // for confirming the SKUs sent from the client
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (!(o instanceof Product)) return false;
-		Product product = (Product) o;
-		return sku != null && sku.equals(product.getSku());
-	}
-	
 }

@@ -5,5 +5,6 @@ public record ProductDTO(
 		String sku,
 		Integer quantity,
 		Double price,
+		String location,
 		Integer threshold
 ) {}

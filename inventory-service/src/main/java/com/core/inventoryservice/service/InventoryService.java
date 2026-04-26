@@ -1,9 +1,15 @@
 package com.core.inventoryservice.service;
 
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
+import com.core.inventoryservice.domain.OrderStatus;
+import com.core.inventoryservice.dto.ConfirmedOrderDTO;
 import com.core.inventoryservice.dto.CreateProductRequest;
+import com.core.inventoryservice.dto.ItemDTO;
 import com.core.inventoryservice.dto.OrderDTO;
+import com.core.inventoryservice.dto.OrderStatusUpdateDTO;
 import com.core.inventoryservice.dto.ProductDTO;
+import com.core.inventoryservice.exception.ProductNotFoundException;
 import com.core.inventoryservice.mapper.ProductMapper;
 import com.core.inventoryservice.model.Product;
 import com.core.inventoryservice.repository.ProductRepo;
@@ -33,19 +39,39 @@ public class InventoryService {
 	}
 	
 	@Transactional
-	public Optional<Product> validateOrder (OrderDTO order){
+	public void validateOrder (OrderDTO order){
 		// todo: implement this
-		return Optional.of(Product.builder()
-				.name("Test Product")
-				.sku("TESTSKU")
-				.quantity(100)
-				.price(10.0)
-				.threshold(10)
-				.build());
+		List<ProductDTO> products = new ArrayList<ProductDTO>();
+		
+		for(ItemDTO item :  order.items()){
+			Product product = productRepo.getProductBySku(item.SKU())
+					.orElseThrow(() -> new ProductNotFoundException(item.SKU()));
+			
+			if(product.getQuantity() < item.quantity()){
+				OrderStatusUpdateDTO statusUpdateDTO =
+						new OrderStatusUpdateDTO(order.id(), OrderStatus.CANCELED);
+				
+				// todo: publish this update
+				
+				return;
+			} else {
+				products.add(productMapper.toProductDTO(product));
+			}
+		}
+		
+		ConfirmedOrderDTO confirmedOrder = ConfirmedOrderDTO.builder()
+				.customerName(order.customerName())
+				.customerPhone(order.customerPhone())
+				.customerAddress(order.customerAddress())
+				.orderCurrentStatus(OrderStatus.CONFIRMED)
+				.totalAmount(order.totalAmount())
+				.products(products)
+				.build();
+		
+		OrderStatusUpdateDTO statusUpdateDTO =
+				new OrderStatusUpdateDTO(order.id(), OrderStatus.CANCELED);
+		
+		// todo: publish this update and publish the confirmed order
 	}
 	
-	private boolean validateSKU(String sku){
-		// todo: fix this to validate SKUs using Product.equals()
-		return true;
-	}
 }
