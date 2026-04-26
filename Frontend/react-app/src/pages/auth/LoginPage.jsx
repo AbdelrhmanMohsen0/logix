@@ -25,8 +25,12 @@ function LoginPage({ onNavigate }) {
     setLoading(true);
     setError("");
     try {
-      await login(form.email, form.password);
-      onNavigate("dashboard");
+      const u = await login(form.email, form.password);
+      const role = (u?.role || '').replace('ROLE_', '');
+      let defaultPage = 'dashboard';
+      if (role === 'SALES') defaultPage = 'orders';
+      if (role === 'WORKER') defaultPage = 'warehouse-operations';
+      onNavigate(defaultPage);
     } catch (err) {
       setError(err.message || "Login failed. Please check your credentials.");
     } finally {
