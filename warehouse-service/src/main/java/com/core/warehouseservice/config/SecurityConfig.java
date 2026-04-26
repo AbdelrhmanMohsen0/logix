@@ -1,4 +1,4 @@
-package com.core.warehouseservice.security;
+package com.core.warehouseservice.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
