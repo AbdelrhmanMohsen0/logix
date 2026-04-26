@@ -4,7 +4,8 @@ import { useInventory } from '../../context/InventoryContext';
 import { OrderAPI } from '../../services/api';
 
 function DashboardPage({ searchQuery, onNavigate }) {
-  const { user } = useAuth();
+  const { user, hasAccess } = useAuth();
+  const role = (user?.role || '').replace('ROLE_', '');
   const { items } = useInventory();
   const lowStockItems = items.filter(i => i.qty < 50);
   const [timeRange, setTimeRange] = useState("Last 30 Days");
@@ -36,7 +37,7 @@ function DashboardPage({ searchQuery, onNavigate }) {
     }
   };
   const currentChart = chartData[timeRange];
-  const kpis = [
+  const allKpis = [
     {
       label: "Total Orders",
       value: "12,485",
@@ -46,6 +47,7 @@ function DashboardPage({ searchQuery, onNavigate }) {
       trendDir: "up",
       note: "vs last month",
       active: true,
+      roles: ['OWNER', 'ADMIN', 'MANAGER', 'SALES'],
     },
     {
       label: "Pending Shipments",
@@ -55,6 +57,7 @@ function DashboardPage({ searchQuery, onNavigate }) {
       trend: "-3%",
       trendDir: "down",
       note: "vs last month",
+      roles: ['OWNER', 'ADMIN', 'MANAGER', 'WORKER'],
     },
     {
       label: "Inventory Levels",
@@ -64,6 +67,7 @@ function DashboardPage({ searchQuery, onNavigate }) {
       trend: "0%",
       trendDir: "up",
       note: "stable",
+      roles: ['OWNER', 'ADMIN', 'MANAGER', 'WORKER'],
     },
     {
       id: "low_stock",
@@ -73,8 +77,10 @@ function DashboardPage({ searchQuery, onNavigate }) {
       iconClass: "error",
       valueClass: "error-text",
       action: "Review items →",
+      roles: ['OWNER', 'ADMIN', 'MANAGER'],
     },
   ];
+  const kpis = allKpis.filter(k => !k.roles || k.roles.includes(role));
   
   const inventoryDist = [
     { label: "Electronics", pct: 45 },
@@ -114,30 +120,34 @@ function DashboardPage({ searchQuery, onNavigate }) {
           </p>
         </div>
         <div className="page-actions">
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={() => onNavigate("inventory")}>
-            <span
-              className="material-symbols-outlined"
-              style={{
-                fontSize: "1rem",
-              }}>
-              add
-            </span>
-            Add Product
-          </button>
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={() => onNavigate("create-order")}>
-            <span
-              className="material-symbols-outlined"
-              style={{
-                fontSize: "1rem",
-              }}>
-              bolt
-            </span>
-            Create Order
-          </button>
+          {hasAccess('inventory') && (
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={() => onNavigate("inventory")}>
+              <span
+                className="material-symbols-outlined"
+                style={{
+                  fontSize: "1rem",
+                }}>
+                add
+              </span>
+              Add Product
+            </button>
+          )}
+          {hasAccess('create-order') && (
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => onNavigate("create-order")}>
+              <span
+                className="material-symbols-outlined"
+                style={{
+                  fontSize: "1rem",
+                }}>
+                bolt
+              </span>
+              Create Order
+            </button>
+          )}
         </div>
       </div>
       <div className="kpi-grid">

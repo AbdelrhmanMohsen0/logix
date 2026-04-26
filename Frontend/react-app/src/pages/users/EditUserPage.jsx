@@ -1,5 +1,7 @@
 import React from 'react';
 import { AuthAPI, UserAPI, OrderAPI, TokenService } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import { validatePassword, PasswordRequirements } from '../../utils/passwordValidation';
 
 function EditUserPage({ userId, onNavigate }) {
   const [form, setForm] = React.useState({
@@ -47,15 +49,25 @@ function EditUserPage({ userId, onNavigate }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name.trim()) {
-      setError("Name is required.");
+      setError("User name is required");
       return;
     }
     if (!form.email.trim()) {
-      setError("Email is required.");
+      setError("Email address is required");
       return;
     }
-    if (!form.password || form.password.length < 8) {
-      setError("Password is required (min 8 characters).");
+    if (form.password) {
+      const pwErrors = validatePassword(form.password);
+      if (pwErrors.length > 0) {
+        setError(pwErrors[0]);
+        return;
+      }
+      if (form.password.length > 30) {
+        setError("Password must be between 8 and 30 characters");
+        return;
+      }
+    } else {
+      setError("Password is required");
       return;
     }
     setSaving(true);
@@ -153,14 +165,7 @@ function EditUserPage({ userId, onNavigate }) {
               placeholder="Enter new or existing password"
               value={form.password}
               onChange={handleChange} />
-            <p
-              style={{
-                fontSize: "0.75rem",
-                color: "var(--outline)",
-                marginTop: "0.25rem",
-              }}>
-              Backend requires password confirmation for all updates.
-            </p>
+            <PasswordRequirements password={form.password} />
           </div>
           <div className="form-group">
             <label htmlFor="eu-role">

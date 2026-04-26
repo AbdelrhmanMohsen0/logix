@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { validatePassword, PasswordRequirements } from '../../utils/passwordValidation';
 
 function SignupPage({ onNavigate }) {
   const { signup } = useAuth();
@@ -19,13 +20,12 @@ function SignupPage({ onNavigate }) {
     setError("");
   };
   const validate = () => {
-    if (!form.organizationName.trim()) return "Organization name is required.";
-    if (!form.email.trim()) return "Email is required.";
-    if (!form.adminName.trim()) return "Owner name is required.";
-    if (form.password.length < 8)
-      return "Password must be at least 8 characters.";
-    if (form.password.length > 30)
-      return "Password must be at most 30 characters.";
+    if (!form.organizationName.trim()) return "Organization name is required";
+    if (!form.email.trim()) return "Email address is required";
+    if (!form.adminName.trim()) return "User name is required";
+    const pwErrors = validatePassword(form.password);
+    if (pwErrors.length > 0) return pwErrors[0];
+    if (form.password.length > 30) return "Password must be between 8 and 30 characters";
     return "";
   };
   const handleSubmit = async (e) => {
@@ -123,14 +123,7 @@ function SignupPage({ onNavigate }) {
               value={form.password}
               onChange={handleChange}
               autoComplete="new-password" />
-            <p
-              style={{
-                fontSize: "0.75rem",
-                color: "var(--outline)",
-                marginTop: "0.25rem",
-              }}>
-              Must be between 8 and 30 characters.
-            </p>
+            <PasswordRequirements password={form.password} />
           </div>
           <button
             type="submit"
