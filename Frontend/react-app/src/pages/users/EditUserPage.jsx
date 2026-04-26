@@ -25,7 +25,7 @@ function EditUserPage({ userId, onNavigate }) {
           setForm({
             name: user.name,
             email: user.email,
-            role: user.role.startsWith("ROLE_") ? user.role.substring(5) : user.role,
+            role: user.role.startsWith("ROLE_") ? user.role : "ROLE_" + user.role,
             password: "", // User must provide a password for update as per backend DTO
           });
         }
