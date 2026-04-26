@@ -1,7 +1,5 @@
 package com.core.orderservice.service;
 
-import java.time.Instant;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import com.core.orderservice.domain.OrderStatus;
@@ -10,26 +8,25 @@ import com.core.orderservice.dto.OrderDTO;
 import com.core.orderservice.dto.OrderRequest;
 import com.core.orderservice.dto.OrderStatusUpdateDTO;
 import com.core.orderservice.dto.OrderSummaryDTO;
-import com.core.orderservice.dto.StatusHistoryDTO;
 import com.core.orderservice.exception.OrderNotFoundException;
+import com.core.orderservice.mapper.OrderMapper;
 import com.core.orderservice.model.Item;
 import com.core.orderservice.model.Order;
-import com.core.orderservice.model.OrderStatusHistory;
+import com.core.orderservice.model.OrderStatusState;
 import com.core.orderservice.repository.OrderRepo;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import tools.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
 public class OrderService {
 	
 	private final OrderRepo orderRepo;
-	private final ObjectMapper objectMapper;
-	private final SqsPublisherService sqsPublisherService;
+	private final OrderMapper orderMapper;
+	private final SNSPublisherService  snsPublisherService;
 	
 	@Transactional
 	public OrderDTO createOrder(OrderRequest request, UUID organizationId) {
@@ -49,82 +46,43 @@ public class OrderService {
 		
 		order.setCurrentStatus(OrderStatus.CREATED);
 		
-		OrderStatusHistory statusHistory = new OrderStatusHistory();
-		statusHistory.setOrder(order);
-		statusHistory.setStatus(OrderStatus.CREATED);
-		statusHistory.setTransitionedAt(Instant.now());
-		order.addStatusHistory(statusHistory);
+		OrderStatusState newState = new OrderStatusState();
+		newState.setOrder(order);
+		newState.setStatus(OrderStatus.CREATED);
+		order.addStatusHistory(newState);
 		
 		Order savedOrder = orderRepo.save(order);
 		
-		OrderDTO savedOrderDTO = toDetailDTO(savedOrder);
-		
-		sqsPublisherService.sendMessage("order.created", savedOrderDTO);
-		
-		return savedOrderDTO;
+		OrderDTO orderDTO = orderMapper.toOrderDTO(savedOrder);
+		snsPublisherService.publishOrderCreatedEvent(orderDTO);
+
+		return orderDTO;
 	}
 	
 	@Transactional
-	protected void changeStatus(@Valid OrderStatusUpdateDTO statusUpdateDTO) {
-		Order order;
-		try {
-			order = orderRepo.findByOrderId(statusUpdateDTO.orderId());
-		} catch (OrderNotFoundException e) {
-			throw new OrderNotFoundException(statusUpdateDTO.orderId());
-		}
-		order.updateStatus(statusUpdateDTO);
+    public void changeStatus(UUID orderId, OrderStatus newStatus) {
+		Order order = orderRepo.findByOrderId(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
+
+		OrderStatusState newState = new OrderStatusState();
+		newState.setOrder(order);
+		newState.setStatus(newStatus);
+
+		order.addStatusHistory(newState);
+		order.setCurrentStatus(newStatus);
+
 		orderRepo.save(order);
 	}
 	
-	public List<OrderSummaryDTO> getOrdersSummary(UUID organizationId) {
+	public List<OrderSummaryDTO> getOrderSummaries(UUID organizationId) {
 		return orderRepo.findAllSummariesByOrg(organizationId);
 	}
 	
 	public OrderDTO getOrder(UUID orgId, UUID orderId) {
-		Order order;
-		try {
-			order = orderRepo.getOrderByOrganizationIdAndOrderId(orgId, orderId);
-		} catch (OrderNotFoundException e) {
-			throw new OrderNotFoundException(orderId);
-		}
-		
-		return toDetailDTO(order);
-	}
-	
-	@SqsListener("order-status-updated-queue")
-	public void handleUpdate(String message) {
-		OrderStatusUpdateDTO updateDTO = objectMapper.readValue(message, OrderStatusUpdateDTO.class);
-		changeStatus(updateDTO);
-		
-		//todo: remove this after testing
-		System.out.println("Received: " + updateDTO);
-	}
-	
-	private OrderDTO toDetailDTO(Order order) {
-		// 1. Map and Sort Status History for the Timeline
-		List<StatusHistoryDTO> historyDTOs = order.getStatusHistory().stream()
-				.sorted(Comparator.comparing(OrderStatusHistory::getTransitionedAt, Comparator.nullsLast(Instant::compareTo)))
-				.map(h -> new StatusHistoryDTO(h.getStatus(), h.getTransitionedAt()))
-				.toList();
+		Order order = orderRepo.getOrderByOrganizationIdAndOrderId(orgId, orderId)
+				.orElseThrow(() -> new OrderNotFoundException(orderId));
 
-		List<ItemDTO> itemDTOs = order.getItems().stream()
-				.map(item -> new ItemDTO(
-						item.getSKU(),
-						item.getName(),
-						item.getQuantity(),
-						item.getPriceAtPurchase()
-				))
-				.toList();
-		
-		return new OrderDTO(
-				order.getId(),
-				order.getCustomerName(),
-				order.getCustomerPhone(),
-				order.getCustomerAddress(),
-				order.getCurrentStatus(),
-				order.getTotalAmount(),
-				itemDTOs,
-				historyDTOs
-		);
+		return orderMapper.toOrderDTO(order);
 	}
+	
+
 }

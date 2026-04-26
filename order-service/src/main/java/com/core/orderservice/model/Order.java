@@ -1,26 +1,15 @@
 package com.core.orderservice.model;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import com.core.orderservice.domain.OrderStatus;
-import com.core.orderservice.dto.OrderStatusUpdateDTO;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.transaction.annotation.Transactional;
 
 @Entity
 @Getter
@@ -33,41 +22,35 @@ public class Order {
 	private UUID id;
 	
 	@NotNull
+	@Column(nullable = false)
 	private UUID organizationId;
-	
+
 	@NotBlank
+	@Column(nullable = false)
 	private String customerName;
-	
+
 	@NotBlank
+	@Column(nullable = false)
 	private String customerPhone;
-	
+
 	@NotBlank
+	@Column(nullable = false)
 	private String customerAddress;
 	
 	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Item> items = new ArrayList<>();
-	
+
+	@Column(nullable = false)
 	private BigDecimal totalAmount = BigDecimal.ZERO;
 	
 	@Enumerated(EnumType.STRING)
 	private OrderStatus currentStatus;
 	
 	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<OrderStatusHistory> statusHistory = new ArrayList<>();
-	
-	@Transactional
-	public void updateStatus(OrderStatusUpdateDTO statusHistory) {
-		this.currentStatus = statusHistory.nextStatus();
-		
-		OrderStatusHistory history = new OrderStatusHistory();
-		history.setOrder(this);
-		history.setStatus(statusHistory.nextStatus());
-		history.setTransitionedAt(statusHistory.transitionedAt());
-		this.statusHistory.add(history);
-	}
-	
-	public void addStatusHistory(OrderStatusHistory statusHistory) {
-		this.statusHistory.add(statusHistory);
+	private List<OrderStatusState> statusHistory = new ArrayList<>();
+
+	public void addStatusHistory(OrderStatusState orderStatusState) {
+		this.statusHistory.add(orderStatusState);
 	}
 	
 	public void addItem(Item item) {
