@@ -31,7 +31,7 @@ public class UserController {
     public ResponseEntity<UserDTO> addUser(@Valid @RequestBody UserCreationRequest userCreationRequest,
                                            JwtAuthenticationToken auth) {
         UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
-        User newUser = userService.addUser(userCreationRequest, orgId, auth.getAuthorities());
+        User newUser = userService.addUser(userCreationRequest, orgId);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()

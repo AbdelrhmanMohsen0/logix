@@ -39,8 +39,11 @@ public class UserService {
                 .build());
     }
 
-    public User addUser(UserCreationRequest userCreationRequest, UUID orgId, Collection<? extends GrantedAuthority> authorities) {
-        validateOwnerCreationPrivileges(authorities, userCreationRequest.role());
+    public User addUser(UserCreationRequest userCreationRequest, UUID orgId) {
+        boolean creatingOwner = UserRole.ROLE_OWNER.equals(userCreationRequest.role());
+        if (creatingOwner) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Owner accounts cannot be created");
+        }
 
         User user = User.builder()
                 .organization(organizationService.getReferenceById(orgId))
@@ -76,16 +79,20 @@ public class UserService {
         User user = userRepository.findByIdAndOrganizationId(id, orgId)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
 
-        List<String> roles = authorities.stream()
+        List<String> updaterRoles = authorities.stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
 
-        if (user.getRoles().contains(UserRole.ROLE_OWNER) && !roles.contains(UserRole.ROLE_OWNER.name())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only Owners can update Owner accounts.");
+        if (!updaterRoles.contains(UserRole.ROLE_OWNER.name()) && user.getRoles().contains(UserRole.ROLE_OWNER)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Owner account updates can only be made by the owner.");
         }
 
-        if (userUpdateRequest.role().equals(UserRole.ROLE_OWNER) && !roles.contains(UserRole.ROLE_OWNER.name())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only Owners can set account roles to OWNER.");
+        if (userUpdateRequest.role().equals(UserRole.ROLE_OWNER) && !user.getRoles().contains(UserRole.ROLE_OWNER)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the owner can have the OWNER role");
+        }
+
+        if (user.getRoles().contains(UserRole.ROLE_OWNER) && !userUpdateRequest.role().equals(UserRole.ROLE_OWNER)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Owner role can't not be updated");
         }
 
         if (userRepository.existsByEmailAndIdNot(userUpdateRequest.email(), id)) {
@@ -104,7 +111,7 @@ public class UserService {
         User user = userRepository.findByIdAndOrganizationId(id, orgId)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
         if (user.getRoles().contains(UserRole.ROLE_OWNER)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Owner accounts can't be deleted.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Owner account can't be deleted.");
         }
         userRepository.delete(user);
     }
@@ -114,17 +121,4 @@ public class UserService {
         return allRoles.subList(role.ordinal(), allRoles.size());
     }
 
-    private void validateOwnerCreationPrivileges(Collection<? extends GrantedAuthority> authorities, UserRole requestedRole) {
-        List<String> roles = authorities.stream()
-                .map(GrantedAuthority::getAuthority)
-                .toList();
-
-        boolean isOwner = roles.contains(UserRole.ROLE_OWNER.name());
-
-        boolean creatingOwner = UserRole.ROLE_OWNER.equals(requestedRole);
-
-        if (creatingOwner && !isOwner) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admins cannot create Owner accounts.");
-        }
-    }
 }

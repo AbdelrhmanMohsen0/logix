@@ -2,7 +2,6 @@ package com.core.authservice.config;
 
 import com.core.authservice.repository.UserRepository;
 import com.core.authservice.security.JpaUserDetailsService;
-import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -10,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -44,7 +44,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(org.springframework.security.config.Customizer.withDefaults())
+                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/signup").permitAll()
                         .anyRequest().authenticated()
@@ -94,7 +94,7 @@ public class SecurityConfig {
     @Bean
     public JwtEncoder jwtEncoder() {
         SecretKey key = new SecretKeySpec(jwtSecret.getBytes(), "HmacSHA256");
-        return new NimbusJwtEncoder(new ImmutableSecret<>(key));
+        return NimbusJwtEncoder.withSecretKey(key).build();
     }
 
     @Bean
