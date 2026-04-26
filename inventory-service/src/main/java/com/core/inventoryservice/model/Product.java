@@ -38,6 +38,10 @@ public class Product {
 	@GeneratedValue(strategy = GenerationType.UUID)
 	private UUID id;
 	
+	@NotNull
+	@Column(nullable = false)
+	private UUID orgId;
+	
 	@NotBlank
 	@Column(nullable = false)
 	private String name;

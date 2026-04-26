@@ -2,6 +2,7 @@ package com.core.inventoryservice.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import com.core.inventoryservice.domain.OrderStatus;
 import com.core.inventoryservice.dto.ConfirmedOrderDTO;
 import com.core.inventoryservice.dto.CreateProductRequest;
@@ -24,8 +25,9 @@ public class InventoryService {
 	private final ProductRepo productRepo;
 	private final ProductMapper productMapper;
 	
-	public ProductDTO createProduct(CreateProductRequest productRequest){
+	public ProductDTO createProduct(CreateProductRequest productRequest, UUID orgId){
 		Product product = Product.builder()
+				.orgId(orgId)
 				.name(productRequest.name())
 				.sku(productRequest.sku())
 				.quantity(productRequest.quantity())
@@ -36,6 +38,17 @@ public class InventoryService {
 		productRepo.save(product);
 		
 		return productMapper.toProductDTO(product);
+	}
+	
+	public void deleteProduct(String sku, UUID orgId){
+		Product product = productRepo.getProductBySku(sku)
+				.orElseThrow(() -> new ProductNotFoundException(sku));
+		
+		if(!product.getOrgId().equals(orgId)){
+			throw new ProductNotFoundException(sku);
+		}
+		
+		productRepo.delete(product);
 	}
 	
 	@Transactional
