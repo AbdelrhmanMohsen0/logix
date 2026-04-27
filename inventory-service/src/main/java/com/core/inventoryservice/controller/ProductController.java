@@ -2,6 +2,7 @@ package com.core.inventoryservice.controller;
 
 import java.util.List;
 import java.util.UUID;
+import com.core.inventoryservice.dto.AddingShipmentRequest;
 import com.core.inventoryservice.dto.CreateProductRequest;
 import com.core.inventoryservice.dto.ProductDTO;
 import com.core.inventoryservice.service.InventoryService;
@@ -24,20 +25,29 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("inventory/products")
+@RequestMapping("inventory")
 public class ProductController {
 	
 	private final InventoryService inventoryService;
 	
 	//todo: add PreAuthorize to unauthorized endpoints
 	
-	@PatchMapping
+	@PatchMapping("/stock")
+	@PreAuthorize("hasRole('MANAGER')")
+	public void addStock(@RequestBody AddingShipmentRequest shipmentRequest, JwtAuthenticationToken auth) {
+		UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
+		inventoryService.addShipment(shipmentRequest, orgId);
+	}
+	
+	@PatchMapping("/products")
+	@PreAuthorize("hasRole('MANAGER')")
 	public void updateProduct(@RequestBody CreateProductRequest product, JwtAuthenticationToken auth) {
 		UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
 		inventoryService.updateProduct(product, orgId);
 	}
 	
-	@GetMapping
+	@GetMapping("/products")
+	@PreAuthorize("hasRole('MANAGER')")
 	public PagedModel<ProductDTO> findAllProducts(
 			@RequestParam(value = "page", defaultValue = "0") int page,
 			@RequestParam(value = "size", defaultValue = "10") int size,
@@ -51,19 +61,20 @@ public class ProductController {
 		return new PagedModel<>(productDTOs);
 	}
 	
-	@GetMapping("/search")
+	@GetMapping("/products/search")
+	@PreAuthorize("hasRole('WORKER') or hasRole('SALES')")
 	public List<ProductDTO> searchProducts(@RequestParam String name) {
 		return inventoryService.searchProducts(name);
 	}
 	
-	@PostMapping
+	@PostMapping("/products")
 	@PreAuthorize("hasRole('MANAGER')")
 	public ProductDTO createProduct(@Valid @RequestBody CreateProductRequest product, JwtAuthenticationToken auth) {
 		UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
 		return inventoryService.createProduct(product, orgId);
 	}
 	
-	@DeleteMapping
+	@DeleteMapping("/products")
 	@PreAuthorize("hasRole('MANAGER')")
 	public void deleteProduct(@Valid @RequestBody String sku, JwtAuthenticationToken auth) {
 		UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());

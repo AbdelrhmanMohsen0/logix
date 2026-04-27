@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import com.core.inventoryservice.domain.OrderStatus;
+import com.core.inventoryservice.dto.AddingShipmentRequest;
 import com.core.inventoryservice.dto.ConfirmedOrderDTO;
 import com.core.inventoryservice.dto.CreateProductRequest;
 import com.core.inventoryservice.dto.ItemDTO;
 import com.core.inventoryservice.dto.OrderDTO;
 import com.core.inventoryservice.dto.OrderStatusUpdateDTO;
 import com.core.inventoryservice.dto.ProductDTO;
+import com.core.inventoryservice.dto.ShipmentItem;
 import com.core.inventoryservice.exception.InvalidOrgIdException;
 import com.core.inventoryservice.exception.ProductNotFoundException;
 import com.core.inventoryservice.mapper.ProductMapper;
@@ -40,6 +42,23 @@ public class InventoryService {
 		productMapper.updateProductFromDto(dto, product);
 		
 		productRepo.save(product);
+	}
+	
+	@Transactional
+	public void addShipment(AddingShipmentRequest shipmentRequest, UUID orgId){
+		
+		for(ShipmentItem item: shipmentRequest.items()){
+			
+			Product product = productRepo.findProductBySku(item.sku())
+					.orElseThrow(() -> new ProductNotFoundException(item.sku()));
+			
+			if(!product.getOrgId().equals(orgId)){
+				throw new InvalidOrgIdException(orgId);
+			}
+			
+			product.setQuantity(product.getQuantity() + item.quantity());
+			productRepo.save(product);
+		}
 	}
 	
 	public List<ProductDTO> searchProducts(String name){
