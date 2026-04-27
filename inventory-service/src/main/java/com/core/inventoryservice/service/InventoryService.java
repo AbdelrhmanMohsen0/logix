@@ -10,12 +10,15 @@ import com.core.inventoryservice.dto.ItemDTO;
 import com.core.inventoryservice.dto.OrderDTO;
 import com.core.inventoryservice.dto.OrderStatusUpdateDTO;
 import com.core.inventoryservice.dto.ProductDTO;
+import com.core.inventoryservice.exception.InvalidOrgIdException;
 import com.core.inventoryservice.exception.ProductNotFoundException;
 import com.core.inventoryservice.mapper.ProductMapper;
 import com.core.inventoryservice.model.Product;
 import com.core.inventoryservice.repository.ProductRepo;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -24,6 +27,39 @@ public class InventoryService {
 	
 	private final ProductRepo productRepo;
 	private final ProductMapper productMapper;
+	
+	@Transactional
+	public void updateProduct(CreateProductRequest dto, UUID orgId) {
+		Product product = productRepo.findProductBySku(dto.sku())
+				.orElseThrow(() -> new ProductNotFoundException(dto.sku()));
+		
+		if(!product.getOrgId().equals(orgId)){
+			throw new InvalidOrgIdException(orgId);
+		}
+		
+		productMapper.updateProductFromDto(dto, product);
+		
+		productRepo.save(product);
+	}
+	
+	public List<ProductDTO> searchProducts(String name){
+		List<Product> products = productRepo.findTop5ByNameContainingIgnoreCase(name)
+				.orElseThrow(() -> new ProductNotFoundException("Product not found"));
+		
+		return productMapper.toProductDTOs(products);
+	}
+	
+	public Page<ProductDTO> findAllProducts(Pageable pageable, UUID orgId) {
+		
+		Page<Product> products = productRepo.findAllByOrderByCreatedAtDesc(pageable)
+				.orElseThrow(() -> new ProductNotFoundException("Product not found"));
+		
+		products.getContent().forEach(product -> {if(!product.getOrgId().equals(orgId)){
+			throw new InvalidOrgIdException(orgId);
+		}});
+		
+		return products.map(productMapper::toProductDTO); //to return ProductDTO instead of Product
+	}
 	
 	public ProductDTO createProduct(CreateProductRequest productRequest, UUID orgId){
 		Product product = Product.builder()
@@ -41,11 +77,11 @@ public class InventoryService {
 	}
 	
 	public void deleteProduct(String sku, UUID orgId){
-		Product product = productRepo.getProductBySku(sku)
+		Product product = productRepo.findProductBySku(sku)
 				.orElseThrow(() -> new ProductNotFoundException(sku));
 		
 		if(!product.getOrgId().equals(orgId)){
-			throw new ProductNotFoundException(sku);
+			throw new InvalidOrgIdException(orgId);
 		}
 		
 		productRepo.delete(product);
@@ -57,7 +93,7 @@ public class InventoryService {
 		List<ProductDTO> products = new ArrayList<ProductDTO>();
 		
 		for(ItemDTO item :  order.items()){
-			Product product = productRepo.getProductBySku(item.SKU())
+			Product product = productRepo.findProductBySku(item.SKU())
 					.orElseThrow(() -> new ProductNotFoundException(item.SKU()));
 			
 			if(product.getQuantity() < item.quantity()){

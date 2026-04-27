@@ -70,6 +70,7 @@ public class Product {
 	private Integer threshold;
 	
 	@CreatedDate
+	@Column(nullable = false, updatable = false)
 	private Instant createdAt;
 	
 	@LastModifiedDate

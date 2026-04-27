@@ -25,6 +25,19 @@ public class GlobalExceptionHandler {
 		
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
 	}
-
-
+	
+	@ExceptionHandler(InvalidOrgIdException.class)
+	public ResponseEntity<Map<String, Object>> handleInvalidOrdIdException(
+			InvalidOrgIdException ex,
+			HttpServletRequest request) {
+		Map<String, Object> body = new LinkedHashMap<>();
+		body.put("timestamp", Instant.now());
+		body.put("status", HttpStatus.NOT_FOUND.value());
+		body.put("error", HttpStatus.NOT_FOUND.getReasonPhrase());
+		body.put("message", ex.getMessage());
+		body.put("path", request.getRequestURI());
+		
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+	}
+	
 }
