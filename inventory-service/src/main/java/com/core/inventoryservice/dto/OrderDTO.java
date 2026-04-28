@@ -1,14 +1,14 @@
-package com.core.orderservice.dto;
+package com.core.inventoryservice.dto;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
-import com.core.orderservice.domain.OrderStatus;
+import com.core.inventoryservice.domain.OrderStatus;
 import jakarta.validation.Valid;
 
 public record OrderDTO(
 		UUID id,
-		UUID orderId,
+		UUID organizationId,
 		String customerName,
 		String customerPhone,
 		String customerAddress,
