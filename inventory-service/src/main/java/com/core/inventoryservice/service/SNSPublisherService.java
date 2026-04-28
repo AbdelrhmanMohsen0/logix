@@ -1,5 +1,6 @@
 package com.core.inventoryservice.service;
 
+import java.util.Map;
 import java.util.UUID;
 import com.core.inventoryservice.dto.ConfirmedOrderDTO;
 import com.core.inventoryservice.dto.OrderStatusUpdateDTO;
@@ -8,8 +9,6 @@ import io.awspring.cloud.sns.core.SnsHeaders;
 import io.awspring.cloud.sns.core.SnsTemplate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,33 +21,33 @@ public class SNSPublisherService {
 	private String orderStatusTopicARN;
 
 	public void publishOrderStatusEvent(OrderStatusUpdateDTO orderStatusEvent) {
-		Message<OrderStatusUpdateDTO> message = MessageBuilder.withPayload(orderStatusEvent)
-				.setHeader(SnsHeaders.MESSAGE_GROUP_ID_HEADER, orderStatusEvent.orderId().toString())
-				.setHeader(SnsHeaders.MESSAGE_DEDUPLICATION_ID_HEADER, UUID.randomUUID().toString())
-				.build();
-		snsTemplate.send(orderStatusTopicARN, message);
+		Map<String, Object> headers = Map.of(
+				SnsHeaders.MESSAGE_GROUP_ID_HEADER, orderStatusEvent.orderId().toString(),
+				SnsHeaders.MESSAGE_DEDUPLICATION_ID_HEADER, UUID.randomUUID().toString()
+		);
+		snsTemplate.convertAndSend(orderStatusTopicARN, orderStatusEvent, headers);
 	}
 	
 	@Value("${inventory.allocated.topic.arn}")
 	private String inventoryAllocatedTopicARN;
 	
 	public void publishInventoryAllocatedEvent(ConfirmedOrderDTO confirmedOrder) {
-		Message<ConfirmedOrderDTO> message = MessageBuilder.withPayload(confirmedOrder)
-				.setHeader(SnsHeaders.MESSAGE_GROUP_ID_HEADER, confirmedOrder.orderId().toString())
-				.setHeader(SnsHeaders.MESSAGE_DEDUPLICATION_ID_HEADER, UUID.randomUUID().toString())
-				.build();
-		snsTemplate.send(inventoryAllocatedTopicARN, message);
+		Map<String, Object> headers = Map.of(
+				SnsHeaders.MESSAGE_GROUP_ID_HEADER, confirmedOrder.orderId().toString(),
+				SnsHeaders.MESSAGE_DEDUPLICATION_ID_HEADER, UUID.randomUUID().toString()
+		);
+		snsTemplate.convertAndSend(inventoryAllocatedTopicARN, confirmedOrder, headers);
 	}
 	
 	@Value("${shipment.received.topic.arn}")
 	private String shipmentReceivedTopicARN;
 	
 	public void publishShipmentReceivedEvent(ShipmentReceivedDTO shipmentReceived) {
-		Message<ShipmentReceivedDTO> message = MessageBuilder.withPayload(shipmentReceived)
-				.setHeader(SnsHeaders.MESSAGE_GROUP_ID_HEADER, shipmentReceived.shipmentID())
-				.setHeader(SnsHeaders.MESSAGE_DEDUPLICATION_ID_HEADER, UUID.randomUUID().toString())
-				.build();
-		snsTemplate.send(shipmentReceivedTopicARN, message);
+		Map<String, Object> headers = Map.of(
+				SnsHeaders.MESSAGE_GROUP_ID_HEADER, UUID.randomUUID() + "-" + shipmentReceived.shipmentID(),
+				SnsHeaders.MESSAGE_DEDUPLICATION_ID_HEADER, UUID.randomUUID().toString()
+		);
+		snsTemplate.convertAndSend(shipmentReceivedTopicARN, shipmentReceived, headers);
 	}
 	
 }

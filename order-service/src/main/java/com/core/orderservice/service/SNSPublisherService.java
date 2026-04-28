@@ -9,6 +9,7 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -21,11 +22,12 @@ public class SNSPublisherService {
 	private String topicARN;
 
 	public void publishOrderCreatedEvent(OrderDTO orderCreatedEvent) {
-		Message<OrderDTO> message = MessageBuilder.withPayload(orderCreatedEvent)
-				.setHeader(SnsHeaders.MESSAGE_GROUP_ID_HEADER, orderCreatedEvent.id().toString())
-				.setHeader(SnsHeaders.MESSAGE_DEDUPLICATION_ID_HEADER, UUID.randomUUID().toString())
-				.build();
-		snsTemplate.send(topicARN, message);
+		Map<String, Object> headers = Map.of(
+				SnsHeaders.MESSAGE_GROUP_ID_HEADER, orderCreatedEvent.id().toString(),
+				SnsHeaders.MESSAGE_DEDUPLICATION_ID_HEADER, UUID.randomUUID().toString()
+		);
+
+		snsTemplate.convertAndSend(topicARN, orderCreatedEvent, headers);
 	}
-	
+
 }
