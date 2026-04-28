@@ -77,7 +77,7 @@ public class Product {
 	private Instant updatedAt;
 	
 	@Transient
-	public ProductStatus productStatus(){
+	public ProductStatus getStockStatus(){
 		if (quantity == 0) {
 			return ProductStatus.OUT_OF_STOCK;
 		} else if (quantity < threshold) {
