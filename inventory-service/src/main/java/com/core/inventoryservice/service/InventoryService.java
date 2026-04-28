@@ -33,7 +33,7 @@ public class InventoryService {
 	private final SNSPublisherService snsPublisherService;
 	
 	@Transactional
-	public void updateProduct(CreateProductRequest dto, UUID orgId) {
+	public ProductDTO updateProduct(CreateProductRequest dto, UUID orgId) {
 		Product product = productRepo.findProductBySku(dto.sku())
 				.orElseThrow(() -> new ProductNotFoundException(dto.sku()));
 		
@@ -41,9 +41,15 @@ public class InventoryService {
 			throw new InvalidOrgIdException(orgId);
 		}
 		
-		productMapper.updateProductFromDto(dto, product);
+		product.setName(dto.name());
+		product.setSku(dto.sku());
+		product.setQuantity(dto.quantity());
+		product.setPrice(dto.price());
+		product.setLocation(dto.location());
+		product.setThreshold(dto.threshold());
 		
 		productRepo.save(product);
+		return productMapper.toProductDTO(product);
 	}
 	
 	@Transactional
@@ -75,7 +81,7 @@ public class InventoryService {
 	public List<ProductDTO> searchProducts(UUID orgId, String name){
 		List<Product> products = productRepo.findTop5ByOrgIdAndNameContainingIgnoreCase(orgId, name);
 		
-		return productMapper.toProductDTOs(products);
+		return products.stream().map(productMapper::toProductDTO).toList();
 	}
 	
 	public Page<ProductDTO> findAllProducts(Pageable pageable, UUID orgId) {
