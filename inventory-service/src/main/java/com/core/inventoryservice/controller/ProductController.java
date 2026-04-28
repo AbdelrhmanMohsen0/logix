@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedModel;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -46,7 +47,7 @@ public class ProductController {
 	
 	@GetMapping("/products")
 	@PreAuthorize("hasRole('MANAGER')")
-	public PagedModel<ProductDTO> findAllProducts(
+	public ResponseEntity<PagedModel<ProductDTO>> findAllProducts(
 			@RequestParam(value = "page", defaultValue = "0") int page,
 			@RequestParam(value = "size", defaultValue = "10") int size,
 			JwtAuthenticationToken auth
@@ -56,21 +57,21 @@ public class ProductController {
 		Pageable pageable = PageRequest.of(page, size);
 		Page<ProductDTO> productDTOs = inventoryService.findAllProducts(pageable, orgId);
 		
-		return new PagedModel<>(productDTOs);
+		return ResponseEntity.ok(new PagedModel<>(productDTOs));
 	}
 	
 	@GetMapping("/products/search")
 	@PreAuthorize("hasRole('WORKER') or hasRole('SALES')")
-	public List<ProductDTO> searchProducts(@RequestParam String name, JwtAuthenticationToken auth) {
+	public ResponseEntity<List<ProductDTO>> searchProducts(@RequestParam String name, JwtAuthenticationToken auth) {
 		UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
-		return inventoryService.searchProducts(orgId, name);
+		return ResponseEntity.ok(inventoryService.searchProducts(orgId, name));
 	}
 	
 	@PostMapping("/products")
 	@PreAuthorize("hasRole('MANAGER')")
-	public ProductDTO createProduct(@Valid @RequestBody CreateProductRequest product, JwtAuthenticationToken auth) {
+	public ResponseEntity<ProductDTO> createProduct(@Valid @RequestBody CreateProductRequest product, JwtAuthenticationToken auth) {
 		UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
-		return inventoryService.createProduct(product, orgId);
+		return ResponseEntity.ok(inventoryService.createProduct(product, orgId));
 	}
 	
 	@DeleteMapping("/products")
