@@ -30,8 +30,6 @@ public class ProductController {
 	
 	private final InventoryService inventoryService;
 	
-	//todo: add PreAuthorize to unauthorized endpoints
-	
 	@PatchMapping("/stock")
 	@PreAuthorize("hasRole('MANAGER')")
 	public void addStock(@RequestBody AddingShipmentRequest shipmentRequest, JwtAuthenticationToken auth) {
@@ -63,8 +61,9 @@ public class ProductController {
 	
 	@GetMapping("/products/search")
 	@PreAuthorize("hasRole('WORKER') or hasRole('SALES')")
-	public List<ProductDTO> searchProducts(@RequestParam String name) {
-		return inventoryService.searchProducts(name);
+	public List<ProductDTO> searchProducts(@RequestParam String name, JwtAuthenticationToken auth) {
+		UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
+		return inventoryService.searchProducts(orgId, name);
 	}
 	
 	@PostMapping("/products")

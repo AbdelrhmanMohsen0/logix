@@ -10,11 +10,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProductRepo extends JpaRepository<Product, UUID> {
 	
-	Optional<List<Product>> findTop5ByNameContainingIgnoreCase(String name);
+	List<Product> findTop5ByOrgIdAndNameContainingIgnoreCase(UUID orgId, String name);
 	
-	Optional<Page<Product>> findAllByOrderByCreatedAtDesc(Pageable pageable);
-	
-	Product getProductById(UUID id);
+	Page<Product> findAllByOrgIdOrderByCreatedAtDesc(Pageable pageable, UUID orgId);
 	
 	Optional<Product> findProductBySku(String sku);
 }

@@ -12,6 +12,7 @@ import com.core.inventoryservice.dto.OrderDTO;
 import com.core.inventoryservice.dto.OrderStatusUpdateDTO;
 import com.core.inventoryservice.dto.ProductDTO;
 import com.core.inventoryservice.dto.ShipmentItem;
+import com.core.inventoryservice.dto.ShipmentReceivedDTO;
 import com.core.inventoryservice.exception.InvalidOrgIdException;
 import com.core.inventoryservice.exception.ProductNotFoundException;
 import com.core.inventoryservice.mapper.ProductMapper;
@@ -29,6 +30,7 @@ public class InventoryService {
 	
 	private final ProductRepo productRepo;
 	private final ProductMapper productMapper;
+	private final SNSPublisherService snsPublisherService;
 	
 	@Transactional
 	public void updateProduct(CreateProductRequest dto, UUID orgId) {
@@ -47,6 +49,7 @@ public class InventoryService {
 	@Transactional
 	public void addShipment(AddingShipmentRequest shipmentRequest, UUID orgId){
 		
+		int totalNumberOfItems = 0;
 		for(ShipmentItem item: shipmentRequest.items()){
 			
 			Product product = productRepo.findProductBySku(item.sku())
@@ -57,27 +60,29 @@ public class InventoryService {
 			}
 			
 			product.setQuantity(product.getQuantity() + item.quantity());
+			totalNumberOfItems += item.quantity();
 			productRepo.save(product);
 		}
+		
+		snsPublisherService.publishShipmentReceivedEvent(new ShipmentReceivedDTO(
+				shipmentRequest.shipmentId(),
+				shipmentRequest.supplierName(),
+				totalNumberOfItems
+		));
+		
 	}
 	
-	public List<ProductDTO> searchProducts(String name){
-		List<Product> products = productRepo.findTop5ByNameContainingIgnoreCase(name)
-				.orElseThrow(() -> new ProductNotFoundException("Product not found"));
+	public List<ProductDTO> searchProducts(UUID orgId, String name){
+		List<Product> products = productRepo.findTop5ByOrgIdAndNameContainingIgnoreCase(orgId, name);
 		
 		return productMapper.toProductDTOs(products);
 	}
 	
 	public Page<ProductDTO> findAllProducts(Pageable pageable, UUID orgId) {
 		
-		Page<Product> products = productRepo.findAllByOrderByCreatedAtDesc(pageable)
-				.orElseThrow(() -> new ProductNotFoundException("Product not found"));
+		Page<Product> products = productRepo.findAllByOrgIdOrderByCreatedAtDesc(pageable, orgId);
 		
-		products.getContent().forEach(product -> {if(!product.getOrgId().equals(orgId)){
-			throw new InvalidOrgIdException(orgId);
-		}});
-		
-		return products.map(productMapper::toProductDTO); //to return ProductDTO instead of Product
+		return products.map(productMapper::toProductDTO);
 	}
 	
 	public ProductDTO createProduct(CreateProductRequest productRequest, UUID orgId){
@@ -87,6 +92,7 @@ public class InventoryService {
 				.sku(productRequest.sku())
 				.quantity(productRequest.quantity())
 				.price(productRequest.price())
+				.location(productRequest.location())
 				.threshold(productRequest.threshold())
 				.build();
 		
@@ -107,27 +113,34 @@ public class InventoryService {
 	}
 	
 	@Transactional
-	public void validateOrder (OrderDTO order){
-		// todo: implement this
-		List<ProductDTO> products = new ArrayList<ProductDTO>();
+	public void validateOrder (OrderDTO order, UUID organizationId){
+		List<ProductDTO> products = new ArrayList<>();
+		List<Product> productsToSave = new ArrayList<>();
 		
 		for(ItemDTO item :  order.items()){
 			Product product = productRepo.findProductBySku(item.SKU())
 					.orElseThrow(() -> new ProductNotFoundException(item.SKU()));
 			
+			if(!product.getOrgId().equals(organizationId)){
+				throw new InvalidOrgIdException(organizationId);
+			}
+			
 			if(product.getQuantity() < item.quantity()){
-				OrderStatusUpdateDTO statusUpdateDTO =
-						new OrderStatusUpdateDTO(order.id(), OrderStatus.CANCELED);
 				
-				// todo: publish this update
+				snsPublisherService.publishOrderStatusEvent(new OrderStatusUpdateDTO(order.id(), OrderStatus.CANCELED));
 				
 				return;
 			} else {
+				product.setQuantity(product.getQuantity() - item.quantity());
+				productsToSave.add(product);
 				products.add(productMapper.toProductDTO(product));
 			}
 		}
 		
+		productRepo.saveAll(productsToSave);
+		
 		ConfirmedOrderDTO confirmedOrder = ConfirmedOrderDTO.builder()
+				.orderId(order.id())
 				.customerName(order.customerName())
 				.customerPhone(order.customerPhone())
 				.customerAddress(order.customerAddress())
@@ -136,10 +149,9 @@ public class InventoryService {
 				.products(products)
 				.build();
 		
-		OrderStatusUpdateDTO statusUpdateDTO =
-				new OrderStatusUpdateDTO(order.id(), OrderStatus.CANCELED);
+		snsPublisherService.publishOrderStatusEvent(new OrderStatusUpdateDTO(order.id(), OrderStatus.CONFIRMED));
+		snsPublisherService.publishInventoryAllocatedEvent(confirmedOrder);
 		
-		// todo: publish this update and publish the confirmed order
 	}
 	
 }

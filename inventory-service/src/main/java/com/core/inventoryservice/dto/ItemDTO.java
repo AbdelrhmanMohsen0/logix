@@ -7,6 +7,6 @@ import jakarta.validation.constraints.Positive;
 public record ItemDTO(
 		@NotBlank String SKU,
 		@NotBlank String name,
-		@Positive Long quantity,
+		@Positive Integer quantity,
 		@Positive BigDecimal priceAtPurchase
 ) {}

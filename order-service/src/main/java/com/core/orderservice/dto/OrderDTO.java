@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 
 public record OrderDTO(
 		UUID id,
+		UUID orderId,
 		String customerName,
 		String customerPhone,
 		String customerAddress,
