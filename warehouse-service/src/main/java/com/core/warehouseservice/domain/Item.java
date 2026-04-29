@@ -26,14 +26,14 @@ public class Item {
 
     @NotNull
     @Column(nullable = false)
-    private String SKU;
+    private String sku;
 
     @NotNull
     @Column(nullable = false)
     private String name;
 
     @Column(nullable = false)
-    private Long quantity = 1L;
+    private Integer quantity;
 
     @NotBlank
     @Column(nullable = false)

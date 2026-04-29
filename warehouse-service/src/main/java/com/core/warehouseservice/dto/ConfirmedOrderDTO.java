@@ -1,11 +1,11 @@
-package com.core.inventoryservice.dto;
+package com.core.warehouseservice.dto;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.UUID;
-import com.core.inventoryservice.domain.OrderStatus;
+import com.core.warehouseservice.domain.OrderStatus;
 import jakarta.validation.Valid;
 import lombok.Builder;
+
+import java.util.List;
+import java.util.UUID;
 
 @Builder
 public record ConfirmedOrderDTO(
@@ -15,6 +15,6 @@ public record ConfirmedOrderDTO(
 		String customerPhone,
 		String customerAddress,
 		OrderStatus orderCurrentStatus,
-		BigDecimal totalAmount,
+		Double totalAmount,
 		List<@Valid ProductDTO> products
 ) {}

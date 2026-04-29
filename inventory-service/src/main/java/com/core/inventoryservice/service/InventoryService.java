@@ -147,6 +147,7 @@ public class InventoryService {
 		
 		ConfirmedOrderDTO confirmedOrder = ConfirmedOrderDTO.builder()
 				.orderId(order.id())
+				.orgId(order.organizationId())
 				.customerName(order.customerName())
 				.customerPhone(order.customerPhone())
 				.customerAddress(order.customerAddress())
