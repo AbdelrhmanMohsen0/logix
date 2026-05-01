@@ -46,4 +46,7 @@ public class Order {
     @Column(nullable = false)
     private Double totalAmount;
 
+    @Column(nullable = false)
+    private String labelURI;
+
 }
