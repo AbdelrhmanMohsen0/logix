@@ -1,7 +1,6 @@
 package com.core.warehouseservice.dto;
 
 import com.core.warehouseservice.domain.OrderWarehouseStatus;
-import jakarta.validation.Valid;
 import lombok.Builder;
 
 import java.util.List;
@@ -13,6 +12,6 @@ public record OrderDTO(
     OrderWarehouseStatus orderStatus,
     Integer numberOfItems,
     String labelURI,
-    List<@Valid ItemDTO> items
+    List<ItemDTO> items
 ) {
 }
