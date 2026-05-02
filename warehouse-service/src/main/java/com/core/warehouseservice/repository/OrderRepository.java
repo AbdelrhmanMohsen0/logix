@@ -4,10 +4,12 @@ import com.core.warehouseservice.domain.Order;
 import com.core.warehouseservice.domain.OrderWarehouseStatus;
 import com.core.warehouseservice.dto.OrderSummaryDTO;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -39,8 +41,19 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
             @Param("organizationId") UUID organizationId
     );
 
+    @Modifying
+    @Query("""
+        UPDATE Order o
+        SET o.orderStatus = com.core.warehouseservice.domain.OrderWarehouseStatus.PENDING,
+            o.lockExpiryTime = null
+        WHERE o.orderStatus = com.core.warehouseservice.domain.OrderWarehouseStatus.IN_PROGRESS
+        AND o.lockExpiryTime < :now
+    """)
+    void releaseAllExpiredLocks(
+            @Param("now") Instant now
+    );
+
     Optional<Order> findOrderByIdAndOrganizationId(UUID id, UUID organizationId);
-    List<Order> findAllByOrganizationId(UUID organizationId);
     List<Order> findAllByOrganizationIdAndOrderStatusIn(UUID organizationId, List<OrderWarehouseStatus> orderStatus);
 
 }

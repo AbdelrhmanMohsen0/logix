@@ -13,6 +13,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,13 +25,17 @@ public class OrderService {
     private final OrderMapper orderMapper;
     private final OrderRepository orderRepository;
 
+    private static final long PICKING_ORDER_LOCK_DURATION_MINUTES = 15;
+
     public void saveNewOrder(ConfirmedOrderDTO confirmedOrderDTO){
         Order order = orderMapper.fromConfirmedOrderDTOtoOrder(confirmedOrderDTO);
         order.setLabelURI("https://example.com");
         orderRepository.save(order);
     }
 
+    @Transactional
     public List<OrderSummaryDTO> getPickingList(UUID orgId){
+
         return orderRepository.findAllSummariesByOrganizationIdAndStatuses(
                 orgId,
                 List.of(OrderWarehouseStatus.PENDING, OrderWarehouseStatus.IN_PROGRESS)
@@ -41,10 +47,29 @@ public class OrderService {
         Order order = orderRepository.findByIdAndOrganizationIdWithItems(orderId, orgId)
                 .orElseThrow(() -> new OrderNotFoundException("No order found with id: " + orderId));
 
+        Instant now = Instant.now();
+
+        if (order.getOrderStatus() == OrderWarehouseStatus.IN_PROGRESS &&
+                order.getLockExpiryTime() != null &&
+                order.getLockExpiryTime().isAfter(now)) {
+            throw new IllegalStateException("Order is currently locked and being processed by another worker.");
+        }
+
         order.setOrderStatus(OrderWarehouseStatus.IN_PROGRESS);
+        order.setLockExpiryTime(now.plus(PICKING_ORDER_LOCK_DURATION_MINUTES, ChronoUnit.MINUTES));
         orderRepository.save(order);
 
         return orderMapper.toOrderDTO(order);
+    }
+
+    @Transactional
+    public void cancelOrderPickingLock(UUID orderId, UUID orgId) {
+        Order order = orderRepository.findOrderByIdAndOrganizationId(orderId, orgId)
+                .orElseThrow(() -> new OrderNotFoundException("No order found with id: " + orderId));
+
+        order.setOrderStatus(OrderWarehouseStatus.PENDING);
+        order.setLockExpiryTime(null);
+        orderRepository.save(order);
     }
 
     public List<ShipmentDTO> getAllOrdersReadyForShipping(UUID orgId){
@@ -64,7 +89,9 @@ public class OrderService {
     public void markOrderAsPacked(UUID orderId, UUID orgId){
         Order order = orderRepository.findOrderByIdAndOrganizationId(orderId, orgId)
                 .orElseThrow(() -> new OrderNotFoundException("No order found with id: " + orderId));
+
         order.setOrderStatus(OrderWarehouseStatus.PACKED);
+        order.setLockExpiryTime(null);
         orderRepository.save(order);
     }
 

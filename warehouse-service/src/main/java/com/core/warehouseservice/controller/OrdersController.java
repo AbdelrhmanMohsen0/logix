@@ -34,11 +34,19 @@ public class OrdersController {
         return ResponseEntity.ok(orderService.getOrderDetails(orderId, orgId));
     }
 
-    @PostMapping("/picking/packed/{id}")
+    @PostMapping("/orders/{orderId}/pack")
     @PreAuthorize("hasRole('WORKER')")
-    public ResponseEntity<List<OrderDTO>> markOrderAsPacked(@PathVariable UUID id, JwtAuthenticationToken auth) {
+    public ResponseEntity<Void> markOrderAsPacked(@PathVariable UUID orderId, JwtAuthenticationToken auth) {
         UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
-        orderService.markOrderAsPacked(id, orgId);
+        orderService.markOrderAsPacked(orderId, orgId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/orders/{orderId}/cancel")
+    @PreAuthorize("hasRole('WORKER')")
+    public ResponseEntity<Void> cancelOrderPickingLock(@PathVariable UUID orderId, JwtAuthenticationToken auth) {
+        UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
+        orderService.cancelOrderPickingLock(orderId, orgId);
         return ResponseEntity.ok().build();
     }
 
