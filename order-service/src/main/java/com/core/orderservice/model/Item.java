@@ -23,7 +23,7 @@ public class Item {
 	
 	@NotNull
 	@Column(nullable = false)
-	private String SKU;
+	private String sku;
 	
 	@NotNull
 	@Column(nullable = false)

@@ -22,7 +22,7 @@ public class OrderMapper {
 
         List<ItemDTO> itemDTOs = order.getItems().stream()
                 .map(item -> new ItemDTO(
-                        item.getSKU(),
+                        item.getSku(),
                         item.getName(),
                         item.getQuantity(),
                         item.getPriceAtPurchase()

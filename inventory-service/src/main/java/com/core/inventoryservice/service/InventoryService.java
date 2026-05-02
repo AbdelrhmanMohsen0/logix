@@ -80,8 +80,8 @@ public class InventoryService {
 		
 	}
 	
-	public List<ProductDTO> searchProducts(UUID orgId, String name){
-		List<Product> products = productRepo.findTop5ByOrgIdAndNameContainingIgnoreCase(orgId, name);
+	public List<ProductDTO> searchProducts(UUID orgId, String query){
+		List<Product> products = productRepo.searchTop5(orgId, query);
 		
 		return products.stream().map(productMapper::toProductDTO).toList();
 	}
@@ -128,8 +128,8 @@ public class InventoryService {
 		List<Product> productsToSave = new ArrayList<>();
 		
 		for(ItemDTO item :  order.items()){
-			Product product = productRepo.findProductBySku(item.SKU())
-					.orElseThrow(() -> new ProductNotFoundException(item.SKU()));
+			Product product = productRepo.findProductBySku(item.sku())
+					.orElseThrow(() -> new ProductNotFoundException(item.sku()));
 			
 			if(!product.getOrgId().equals(organizationId)){
 				throw new InvalidOrgIdException(organizationId);

@@ -34,7 +34,7 @@ public class OrderService {
 		order.setCustomerAddress(request.customerAddress());
 		for (ItemDTO itemDto : request.items()) {
 			Item item = new Item();
-			item.setSKU(itemDto.SKU());
+			item.setSku(itemDto.sku());
 			item.setName(itemDto.name());
 			item.setQuantity(itemDto.quantity());
 			item.setPriceAtPurchase(itemDto.priceAtPurchase());

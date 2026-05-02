@@ -55,9 +55,9 @@ public class ProductController {
 	
 	@GetMapping("/products/search")
 	@PreAuthorize("hasRole('WORKER') or hasRole('SALES')")
-	public ResponseEntity<List<ProductDTO>> searchProducts(@RequestParam String name, JwtAuthenticationToken auth) {
+	public ResponseEntity<List<ProductDTO>> searchProducts(@RequestParam String query, JwtAuthenticationToken auth) {
 		UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
-		return ResponseEntity.ok(inventoryService.searchProducts(orgId, name));
+		return ResponseEntity.ok(inventoryService.searchProducts(orgId, query));
 	}
 	
 	@PostMapping("/products")

@@ -27,9 +27,7 @@ public class SQSListenerService {
     }
 
     private void handleShipmentReceived(ReceivedShipmentEventDTO receivedShipmentEventDTO) {
-        log.info("Received Shipment Event: {}", receivedShipmentEventDTO);
         inboundShipmentService.saveInboundShipment(receivedShipmentEventDTO);
-        log.info("Shipment Received Successfully");
     }
 
     private void handleInventoryAllocated(ConfirmedOrderEventDTO confirmedOrderEventDTO) {
