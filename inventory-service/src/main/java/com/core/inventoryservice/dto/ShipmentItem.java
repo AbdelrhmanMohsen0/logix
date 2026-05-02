@@ -5,5 +5,5 @@ import jakarta.validation.constraints.Positive;
 
 public record ShipmentItem(
 		@NotNull String sku,
-		@Positive Integer quantity
+		@Positive Long quantity
 ) {}

@@ -6,10 +6,10 @@ import jakarta.validation.constraints.NotNull;
 public record CreateProductRequest(
 		@NotBlank String name,
 		@NotNull String sku,
-		@NotNull Integer quantity,
+		@NotNull Long quantity,
 		@NotNull Double price,
 		@NotBlank String location,
-		@NotNull Integer threshold
+		@NotNull Long threshold
 ) {
 
 }

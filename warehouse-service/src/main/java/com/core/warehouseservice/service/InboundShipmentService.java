@@ -20,6 +20,7 @@ public class InboundShipmentService {
 
     public void saveInboundShipment(ReceivedShipmentEventDTO receivedShipmentEventDTO) {
         InboundShipment inboundShipment = InboundShipment.builder()
+                .organizationId(receivedShipmentEventDTO.organizationId())
                 .shipmentId(receivedShipmentEventDTO.shipmentID())
                 .supplierName(receivedShipmentEventDTO.supplierName())
                 .totalItemsReceived(receivedShipmentEventDTO.totalNumberOfItems())

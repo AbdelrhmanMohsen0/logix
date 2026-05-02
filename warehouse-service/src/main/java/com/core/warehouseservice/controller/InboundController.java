@@ -20,7 +20,7 @@ public class InboundController {
 
     private final InboundShipmentService inboundShipmentService;
 
-    @GetMapping("/inbound")
+    @GetMapping
     @PreAuthorize("hasRole('WORKER')")
     public ResponseEntity<List<InboundShipmentDTO>> getInboundShipments(JwtAuthenticationToken auth) {
         UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());

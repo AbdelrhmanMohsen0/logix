@@ -33,7 +33,7 @@ public class Item {
     private String name;
 
     @Column(nullable = false)
-    private Integer quantity;
+    private Long quantity;
 
     @NotBlank
     @Column(nullable = false)

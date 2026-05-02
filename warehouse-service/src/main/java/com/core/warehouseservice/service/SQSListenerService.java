@@ -4,12 +4,14 @@ import com.core.warehouseservice.dto.ConfirmedOrderEventDTO;
 import com.core.warehouseservice.dto.ReceivedShipmentEventDTO;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SQSListenerService {
 
     private final ObjectMapper objectMapper;
@@ -25,7 +27,9 @@ public class SQSListenerService {
     }
 
     private void handleShipmentReceived(ReceivedShipmentEventDTO receivedShipmentEventDTO) {
+        log.info("Received Shipment Event: {}", receivedShipmentEventDTO);
         inboundShipmentService.saveInboundShipment(receivedShipmentEventDTO);
+        log.info("Shipment Received Successfully");
     }
 
     private void handleInventoryAllocated(ConfirmedOrderEventDTO confirmedOrderEventDTO) {

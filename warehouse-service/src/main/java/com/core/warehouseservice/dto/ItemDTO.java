@@ -6,7 +6,7 @@ import lombok.Builder;
 public record ItemDTO(
     String sku,
     String name,
-    Integer quantity,
+    Long quantity,
     String location
 ) {
 }

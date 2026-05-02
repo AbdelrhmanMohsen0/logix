@@ -53,7 +53,7 @@ public class Product {
 	@NotNull
 	@Min(0)
 	@Column(nullable = false)
-	private Integer quantity;
+	private Long quantity;
 	
 	@NotNull
 	@Min(0)
@@ -67,7 +67,7 @@ public class Product {
 	@NotNull
 	@Min(0)
 	@Column(nullable = false)
-	private Integer threshold;
+	private Long threshold;
 	
 	@CreatedDate
 	@Column(nullable = false, updatable = false)

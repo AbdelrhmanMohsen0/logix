@@ -7,7 +7,7 @@ import lombok.Builder;
 public record ProductDTO(
 		String name,
 		String sku,
-		Integer quantity,
+		Long quantity,
 		Double price,
 		String location,
 		ProductStatus stockStatus

@@ -55,7 +55,7 @@ public class InventoryService {
 	@Transactional
 	public void addShipment(AddingShipmentRequest shipmentRequest, UUID orgId){
 		
-		int totalNumberOfItems = 0;
+		long totalNumberOfItems = 0L;
 		for(ShipmentItem item: shipmentRequest.items()){
 			
 			Product product = productRepo.findProductBySku(item.sku())
@@ -71,6 +71,7 @@ public class InventoryService {
 		}
 		
 		snsPublisherService.publishShipmentReceivedEvent(new ShipmentReceivedDTO(
+				orgId,
 				shipmentRequest.shipmentId(),
 				shipmentRequest.supplierName(),
 				totalNumberOfItems

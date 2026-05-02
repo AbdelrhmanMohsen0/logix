@@ -6,6 +6,7 @@ import com.core.warehouseservice.dto.ConfirmedOrderEventDTO;
 import com.core.warehouseservice.dto.OrderDTO;
 import com.core.warehouseservice.dto.OrderSummaryDTO;
 import com.core.warehouseservice.dto.ShipmentDTO;
+import com.core.warehouseservice.exceptions.OrderLockedException;
 import com.core.warehouseservice.exceptions.OrderNotFoundException;
 import com.core.warehouseservice.mapper.OrderMapper;
 import com.core.warehouseservice.repository.OrderRepository;
@@ -35,7 +36,6 @@ public class OrderService {
 
     @Transactional
     public List<OrderSummaryDTO> getPickingList(UUID orgId){
-
         return orderRepository.findAllSummariesByOrganizationIdAndStatuses(
                 orgId,
                 List.of(OrderWarehouseStatus.PENDING, OrderWarehouseStatus.IN_PROGRESS)
@@ -52,7 +52,7 @@ public class OrderService {
         if (order.getOrderStatus() == OrderWarehouseStatus.IN_PROGRESS &&
                 order.getLockExpiryTime() != null &&
                 order.getLockExpiryTime().isAfter(now)) {
-            throw new IllegalStateException("Order is currently locked and being processed by another worker.");
+            throw new OrderLockedException("Order is currently locked and being processed by another worker.");
         }
 
         order.setOrderStatus(OrderWarehouseStatus.IN_PROGRESS);
@@ -81,6 +81,7 @@ public class OrderService {
     public void markShipmentAsShipped(UUID orderId, UUID orgId){
         Order order = orderRepository.findOrderByIdAndOrganizationId(orderId, orgId)
                 .orElseThrow(() -> new OrderNotFoundException("No order found with id: " + orderId));
+
         order.setOrderStatus(OrderWarehouseStatus.SHIPPED);
         orderRepository.save(order);
     }
