@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Builder
-public record ConfirmedOrderDTO(
+public record ConfirmedOrderEventDTO(
 		UUID orderId,
 		UUID orgId,
 		String customerName,

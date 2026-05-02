@@ -1,6 +1,6 @@
 package com.core.warehouseservice.service;
 
-import com.core.warehouseservice.dto.ConfirmedOrderDTO;
+import com.core.warehouseservice.dto.ConfirmedOrderEventDTO;
 import com.core.warehouseservice.dto.ReceivedShipmentEventDTO;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ public class SQSListenerService {
     public void listen(String payload, @Header("eventType") String eventType) {
         switch (eventType) {
             case "SHIPMENT_RECEIVED" -> handleShipmentReceived(objectMapper.readValue(payload, ReceivedShipmentEventDTO.class));
-            case "INVENTORY_ALLOCATED" -> handleInventoryAllocated(objectMapper.readValue(payload, ConfirmedOrderDTO.class));
+            case "INVENTORY_ALLOCATED" -> handleInventoryAllocated(objectMapper.readValue(payload, ConfirmedOrderEventDTO.class));
         }
     }
 
@@ -28,8 +28,8 @@ public class SQSListenerService {
         inboundShipmentService.saveInboundShipment(receivedShipmentEventDTO);
     }
 
-    private void handleInventoryAllocated(ConfirmedOrderDTO confirmedOrderDTO) {
-        orderService.saveNewOrder(confirmedOrderDTO);
+    private void handleInventoryAllocated(ConfirmedOrderEventDTO confirmedOrderEventDTO) {
+        orderService.saveNewOrder(confirmedOrderEventDTO);
     }
 
 }

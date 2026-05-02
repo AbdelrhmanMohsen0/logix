@@ -3,7 +3,7 @@ package com.core.warehouseservice.mapper;
 import com.core.warehouseservice.domain.Item;
 import com.core.warehouseservice.domain.Order;
 import com.core.warehouseservice.domain.OrderWarehouseStatus;
-import com.core.warehouseservice.dto.ConfirmedOrderDTO;
+import com.core.warehouseservice.dto.ConfirmedOrderEventDTO;
 import com.core.warehouseservice.dto.ItemDTO;
 import com.core.warehouseservice.dto.OrderDTO;
 import com.core.warehouseservice.dto.ShipmentDTO;
@@ -14,15 +14,15 @@ import java.util.List;
 @Component
 public class OrderMapper {
 
-    public Order fromConfirmedOrderDTOtoOrder(ConfirmedOrderDTO confirmedOrderDTO){
+    public Order fromConfirmedOrderDTOtoOrder(ConfirmedOrderEventDTO confirmedOrderEventDTO){
         return Order.builder()
-                .id(confirmedOrderDTO.orderId())
-                .organizationId(confirmedOrderDTO.orgId())
-                .customerName(confirmedOrderDTO.customerName())
-                .customerPhone(confirmedOrderDTO.customerPhone())
-                .customerAddress(confirmedOrderDTO.customerAddress())
+                .id(confirmedOrderEventDTO.orderId())
+                .organizationId(confirmedOrderEventDTO.orgId())
+                .customerName(confirmedOrderEventDTO.customerName())
+                .customerPhone(confirmedOrderEventDTO.customerPhone())
+                .customerAddress(confirmedOrderEventDTO.customerAddress())
                 .orderStatus(OrderWarehouseStatus.PENDING)
-                .items(confirmedOrderDTO.products().stream().map(
+                .items(confirmedOrderEventDTO.products().stream().map(
                         productDTO -> Item.builder()
                                 .sku(productDTO.sku())
                                 .name(productDTO.name())
@@ -30,7 +30,7 @@ public class OrderMapper {
                                 .quantity(productDTO.quantity())
                                 .build()
                 ).toList())
-                .totalAmount(confirmedOrderDTO.totalAmount())
+                .totalAmount(confirmedOrderEventDTO.totalAmount())
                 .build();
     }
 

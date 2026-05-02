@@ -2,7 +2,6 @@ package com.core.warehouseservice.controller;
 
 import com.core.warehouseservice.dto.OrderDTO;
 import com.core.warehouseservice.dto.OrderSummaryDTO;
-import com.core.warehouseservice.dto.ShipmentDTO;
 import com.core.warehouseservice.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,27 +13,27 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/warehouse")
+@RequestMapping("/warehouse/orders")
 @RequiredArgsConstructor
 public class OrdersController {
 
     private final OrderService orderService;
 
-    @GetMapping("/orders")
+    @GetMapping
     @PreAuthorize("hasRole('WORKER')")
     public ResponseEntity<List<OrderSummaryDTO>> getPickingList(JwtAuthenticationToken auth) {
         UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
         return ResponseEntity.ok(orderService.getPickingList(orgId));
     }
 
-    @GetMapping("/orders/{orderId}")
+    @GetMapping("/{orderId}")
     @PreAuthorize("hasRole('WORKER')")
     public ResponseEntity<OrderDTO> getOrder(@PathVariable UUID orderId, JwtAuthenticationToken auth) {
         UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
         return ResponseEntity.ok(orderService.getOrderDetails(orderId, orgId));
     }
 
-    @PostMapping("/orders/{orderId}/pack")
+    @PostMapping("/{orderId}/pack")
     @PreAuthorize("hasRole('WORKER')")
     public ResponseEntity<Void> markOrderAsPacked(@PathVariable UUID orderId, JwtAuthenticationToken auth) {
         UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
@@ -42,27 +41,11 @@ public class OrdersController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/orders/{orderId}/cancel")
+    @PostMapping("/{orderId}/cancel")
     @PreAuthorize("hasRole('WORKER')")
     public ResponseEntity<Void> cancelOrderPickingLock(@PathVariable UUID orderId, JwtAuthenticationToken auth) {
         UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
         orderService.cancelOrderPickingLock(orderId, orgId);
-        return ResponseEntity.ok().build();
-    }
-
-
-    @GetMapping("/shipments")
-    @PreAuthorize("hasRole('WORKER')")
-    public ResponseEntity<List<ShipmentDTO>> getShipments(JwtAuthenticationToken auth) {
-        UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
-        return ResponseEntity.ok(orderService.getAllOrdersReadyForShipping(orgId));
-    }
-
-    @PostMapping("/shipments/shipped/{id}")
-    @PreAuthorize("hasRole('WORKER')")
-    public ResponseEntity<Void> markShipmentAsShipped(@PathVariable UUID id, JwtAuthenticationToken auth) {
-        UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
-        orderService.markShipmentAsShipped(id, orgId);
         return ResponseEntity.ok().build();
     }
 

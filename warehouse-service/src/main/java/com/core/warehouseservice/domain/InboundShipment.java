@@ -24,6 +24,10 @@ public class InboundShipment {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotNull
+    @Column(nullable = false)
+    private UUID organizationId;
+
     @NotBlank
     @Column(nullable = false)
     private String shipmentId;

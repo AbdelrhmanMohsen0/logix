@@ -2,7 +2,7 @@ package com.core.warehouseservice.service;
 
 import com.core.warehouseservice.domain.Order;
 import com.core.warehouseservice.domain.OrderWarehouseStatus;
-import com.core.warehouseservice.dto.ConfirmedOrderDTO;
+import com.core.warehouseservice.dto.ConfirmedOrderEventDTO;
 import com.core.warehouseservice.dto.OrderDTO;
 import com.core.warehouseservice.dto.OrderSummaryDTO;
 import com.core.warehouseservice.dto.ShipmentDTO;
@@ -27,8 +27,8 @@ public class OrderService {
 
     private static final long PICKING_ORDER_LOCK_DURATION_MINUTES = 15;
 
-    public void saveNewOrder(ConfirmedOrderDTO confirmedOrderDTO){
-        Order order = orderMapper.fromConfirmedOrderDTOtoOrder(confirmedOrderDTO);
+    public void saveNewOrder(ConfirmedOrderEventDTO confirmedOrderEventDTO){
+        Order order = orderMapper.fromConfirmedOrderDTOtoOrder(confirmedOrderEventDTO);
         order.setLabelURI("https://example.com");
         orderRepository.save(order);
     }
