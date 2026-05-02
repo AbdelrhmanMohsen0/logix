@@ -40,5 +40,13 @@ public class GlobalExceptionHandler {
 		body.put("message", errorMessage);
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
 	}
+
+	@ExceptionHandler(SkuAlreadyExistException.class)
+	public ResponseEntity<Map<String, Object>> handleSkuAlreadyExistException(SkuAlreadyExistException ex) {
+		Map<String, Object> body = new LinkedHashMap<>();
+		body.put("status", HttpStatus.CONFLICT.value());
+		body.put("message", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+	}
 	
 }

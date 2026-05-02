@@ -15,6 +15,7 @@ import com.core.inventoryservice.dto.ShipmentItem;
 import com.core.inventoryservice.dto.ShipmentReceivedDTO;
 import com.core.inventoryservice.exception.InvalidOrgIdException;
 import com.core.inventoryservice.exception.ProductNotFoundException;
+import com.core.inventoryservice.exception.SkuAlreadyExistException;
 import com.core.inventoryservice.mapper.ProductMapper;
 import com.core.inventoryservice.model.Product;
 import com.core.inventoryservice.repository.ProductRepo;
@@ -22,7 +23,9 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -36,7 +39,11 @@ public class InventoryService {
 	public ProductDTO updateProduct(CreateProductRequest dto, UUID orgId) {
 		Product product = productRepo.findProductBySku(dto.sku())
 				.orElseThrow(() -> new ProductNotFoundException(dto.sku()));
-		
+
+		if (!product.getSku().equals(dto.sku())) {
+			validateSku(dto.sku(),  orgId);
+		}
+
 		if(!product.getOrgId().equals(orgId)){
 			throw new InvalidOrgIdException(orgId);
 		}
@@ -93,6 +100,8 @@ public class InventoryService {
 	}
 	
 	public ProductDTO createProduct(CreateProductRequest productRequest, UUID orgId){
+		validateSku(productRequest.sku(), orgId);
+
 		Product product = Product.builder()
 				.orgId(orgId)
 				.name(productRequest.name())
@@ -161,5 +170,10 @@ public class InventoryService {
 		snsPublisherService.publishInventoryAllocatedEvent(confirmedOrder);
 		
 	}
-	
+
+	private void validateSku(String sku, UUID orgId) {
+		if (productRepo.existsBySkuAndOrgId(sku, orgId)) {
+			throw new SkuAlreadyExistException("A product with sku " + sku + " already exists");
+		}
+	}
 }
