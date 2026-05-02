@@ -51,7 +51,7 @@ public class OrderService {
 		Order savedOrder = orderRepo.save(order);
 		
 		OrderDTO orderDTO = orderMapper.toOrderDTO(savedOrder);
-		snsPublisherService.publishOrderCreatedEvent(orderDTO);
+		snsPublisherService.publishOrderCreatedEvent(orderDTO, organizationId);
 
 		return orderDTO;
 	}

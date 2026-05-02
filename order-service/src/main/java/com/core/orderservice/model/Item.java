@@ -1,6 +1,5 @@
 package com.core.orderservice.model;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 import jakarta.persistence.*;
@@ -33,5 +32,5 @@ public class Item {
 	private Long quantity = 1L;
 	
 	@Column(nullable = false)
-	private BigDecimal priceAtPurchase;
+	private Double priceAtPurchase;
 }

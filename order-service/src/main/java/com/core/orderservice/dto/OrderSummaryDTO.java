@@ -1,6 +1,5 @@
 package com.core.orderservice.dto;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 import com.core.orderservice.domain.OrderStatus;
@@ -10,5 +9,5 @@ public record OrderSummaryDTO(
 		String customerName,
 		Instant orderDate,
 		OrderStatus currentStatus,
-		BigDecimal totalAmount
+		Double totalAmount
 ) {}

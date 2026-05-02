@@ -2,6 +2,7 @@ package com.core.inventoryservice.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import com.core.inventoryservice.domain.OrderStatus;
 import com.core.inventoryservice.domain.ProductStatus;
@@ -22,12 +23,14 @@ import com.core.inventoryservice.model.Product;
 import com.core.inventoryservice.repository.ProductRepo;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class InventoryService {
 	
 	private final ProductRepo productRepo;
@@ -123,35 +126,40 @@ public class InventoryService {
 	}
 	
 	@Transactional
-	public void validateOrder (OrderDTO order, UUID organizationId){
+	public void validateOrder(OrderDTO order, UUID organizationId){
 		List<ProductDTO> products = new ArrayList<>();
 		List<Product> productsToSave = new ArrayList<>();
 		
 		for(ItemDTO item :  order.items()){
-			Product product = productRepo.findProductBySku(item.sku())
-					.orElseThrow(() -> new ProductNotFoundException(item.sku()));
-			
-			if(!product.getOrgId().equals(organizationId)){
+
+			Optional<Product> product = productRepo.findProductBySku(item.sku());
+
+			if (product.isEmpty()) {
+				log.error("Product not found with SKU {}", item.sku());
+				snsPublisherService.publishOrderStatusEvent(new OrderStatusUpdateDTO(order.orderId(), OrderStatus.CANCELED));
+				return;
+			}
+
+			if(!product.get().getOrgId().equals(organizationId)){
 				throw new InvalidOrgIdException(organizationId);
 			}
 			
-			if(product.getQuantity() < item.quantity()){
-				
-				snsPublisherService.publishOrderStatusEvent(new OrderStatusUpdateDTO(order.id(), OrderStatus.CANCELED));
-				
+			if(product.get().getQuantity() < item.quantity()){
+				snsPublisherService.publishOrderStatusEvent(new OrderStatusUpdateDTO(order.orderId(), OrderStatus.CANCELED));
 				return;
-			} else {
-				product.setQuantity(product.getQuantity() - item.quantity());
-				productsToSave.add(product);
-				products.add(productMapper.toProductDTO(product));
 			}
+
+			product.get().setQuantity(product.get().getQuantity() - item.quantity());
+			productsToSave.add(product.get());
+			products.add(productMapper.toProductDTO(product.get()));
+
 		}
 		
 		productRepo.saveAll(productsToSave);
 		
 		ConfirmedOrderDTO confirmedOrder = ConfirmedOrderDTO.builder()
-				.orderId(order.id())
-				.orgId(order.organizationId())
+				.orderId(order.orderId())
+				.orgId(organizationId)
 				.customerName(order.customerName())
 				.customerPhone(order.customerPhone())
 				.customerAddress(order.customerAddress())
@@ -160,7 +168,7 @@ public class InventoryService {
 				.products(products)
 				.build();
 		
-		snsPublisherService.publishOrderStatusEvent(new OrderStatusUpdateDTO(order.id(), OrderStatus.CONFIRMED));
+		snsPublisherService.publishOrderStatusEvent(new OrderStatusUpdateDTO(order.orderId(), OrderStatus.CONFIRMED));
 		snsPublisherService.publishInventoryAllocatedEvent(confirmedOrder);
 		
 	}

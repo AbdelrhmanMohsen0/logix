@@ -1,6 +1,5 @@
 package com.core.orderservice.model;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -41,7 +40,7 @@ public class Order {
 	private List<Item> items = new ArrayList<>();
 
 	@Column(nullable = false)
-	private BigDecimal totalAmount = BigDecimal.ZERO;
+	private Double totalAmount = 0D;
 	
 	@Enumerated(EnumType.STRING)
 	private OrderStatus currentStatus;
@@ -56,7 +55,7 @@ public class Order {
 	public void addItem(Item item) {
 		items.add(item);
 		item.setOrder(this);
-		BigDecimal itemTotal = item.getPriceAtPurchase().multiply(BigDecimal.valueOf(item.getQuantity()));
-		this.totalAmount = this.totalAmount.add(itemTotal);
+		Double itemTotal = item.getPriceAtPurchase() * item.getQuantity();
+		this.totalAmount = this.totalAmount + itemTotal;
 	}
 }

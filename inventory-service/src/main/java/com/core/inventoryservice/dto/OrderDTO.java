@@ -6,8 +6,7 @@ import com.core.inventoryservice.domain.OrderStatus;
 import jakarta.validation.Valid;
 
 public record OrderDTO(
-		UUID id,
-		UUID organizationId,
+		UUID orderId,
 		String customerName,
 		String customerPhone,
 		String customerAddress,
