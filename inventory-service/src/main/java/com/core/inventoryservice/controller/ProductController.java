@@ -67,9 +67,9 @@ public class ProductController {
 		return ResponseEntity.ok(inventoryService.createProduct(product, orgId));
 	}
 	
-	@DeleteMapping("/products")
+	@DeleteMapping("/products/{sku}")
 	@PreAuthorize("hasRole('MANAGER')")
-	public void deleteProduct(@Valid @RequestBody String sku, JwtAuthenticationToken auth) {
+	public void deleteProduct(@PathVariable String sku, JwtAuthenticationToken auth) {
 		UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
 		inventoryService.deleteProduct(sku, orgId);
 	}

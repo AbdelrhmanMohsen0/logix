@@ -23,9 +23,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -39,10 +37,6 @@ public class InventoryService {
 	public ProductDTO updateProduct(CreateProductRequest dto, UUID orgId) {
 		Product product = productRepo.findProductBySku(dto.sku())
 				.orElseThrow(() -> new ProductNotFoundException(dto.sku()));
-
-		if (!product.getSku().equals(dto.sku())) {
-			validateSku(dto.sku(),  orgId);
-		}
 
 		if(!product.getOrgId().equals(orgId)){
 			throw new InvalidOrgIdException(orgId);
@@ -176,4 +170,5 @@ public class InventoryService {
 			throw new SkuAlreadyExistException("A product with sku " + sku + " already exists");
 		}
 	}
+
 }
