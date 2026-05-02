@@ -15,4 +15,6 @@ public interface ProductRepo extends JpaRepository<Product, UUID> {
 	Page<Product> findAllByOrgIdOrderByCreatedAtDesc(Pageable pageable, UUID orgId);
 	
 	Optional<Product> findProductBySku(String sku);
+
+	boolean existsBySku(String sku);
 }
