@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import com.core.inventoryservice.domain.OrderStatus;
+import com.core.inventoryservice.domain.ProductStatus;
 import com.core.inventoryservice.dto.AddingShipmentRequest;
 import com.core.inventoryservice.dto.ConfirmedOrderDTO;
 import com.core.inventoryservice.dto.CreateProductRequest;
@@ -86,9 +87,8 @@ public class InventoryService {
 		return products.stream().map(productMapper::toProductDTO).toList();
 	}
 	
-	public Page<ProductDTO> findAllProducts(Pageable pageable, UUID orgId) {
-		
-		Page<Product> products = productRepo.findAllByOrgIdOrderByCreatedAtDesc(pageable, orgId);
+	public Page<ProductDTO> findAllProducts(Pageable pageable, UUID orgId, ProductStatus stockFilter) {
+		Page<Product> products = productRepo.findAllByOrgIdAndStockStatus(pageable, orgId, stockFilter.name());
 		
 		return products.map(productMapper::toProductDTO);
 	}
