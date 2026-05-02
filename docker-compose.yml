@@ -54,6 +54,8 @@ services:
       SERVER_PORT: 8082
     ports:
       - "8082:8082"
+    volumes:
+      - ${USERPROFILE:-$HOME}/.aws:/root/.aws:ro
 
 
   # INVENTORY SERVICE POSTGRES DATABASE
@@ -83,7 +85,8 @@ services:
       SERVER_PORT: 8083
     ports:
       - "8083:8083"
-
+    volumes:
+      - ${USERPROFILE:-$HOME}/.aws:/root/.aws:ro
 
   # WAREHOUSE SERVICE POSTGRES DATABASE
   warehouse-db:
@@ -112,6 +115,8 @@ services:
       SERVER_PORT: 8084
     ports:
       - "8084:8084"
+    volumes:
+      - ${USERPROFILE:-$HOME}/.aws:/root/.aws:ro
 
 volumes:
   auth_data:
