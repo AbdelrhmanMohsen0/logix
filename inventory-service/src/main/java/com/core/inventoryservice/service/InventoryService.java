@@ -127,16 +127,15 @@ public class InventoryService {
 	
 	@Transactional
 	public void validateOrder(OrderDTO order, UUID organizationId){
-		List<ProductDTO> products = new ArrayList<>();
+		List<ProductDTO> orderItems = new ArrayList<>();
 		List<Product> productsToSave = new ArrayList<>();
 		
 		for (ItemDTO item :  order.items()){
-
 			Optional<Product> product = productRepo.findProductBySku(item.sku());
 
 			if (product.isEmpty()) {
 				log.error("Product not found with SKU {}", item.sku());
-				snsPublisherService.publishOrderStatusEvent(new OrderStatusUpdateDTO(order.orderId(), OrderStatus.CANCELED));
+				publishOrderCancelEvent(order);
 				return;
 			}
 
@@ -145,24 +144,38 @@ public class InventoryService {
 			}
 			
 			if (product.get().getQuantity() < item.quantity()){
-				snsPublisherService.publishOrderStatusEvent(new OrderStatusUpdateDTO(order.orderId(), OrderStatus.CANCELED));
+				publishOrderCancelEvent(order);
 				return;
 			}
 
 			if (!product.get().getPrice().equals(item.priceAtPurchase())) {
-				snsPublisherService.publishOrderStatusEvent(new OrderStatusUpdateDTO(order.orderId(), OrderStatus.CANCELED));
+				publishOrderCancelEvent(order);
 				return;
 			}
 
 			product.get().setQuantity(product.get().getQuantity() - item.quantity());
 			productsToSave.add(product.get());
-			products.add(productMapper.toProductDTO(product.get()));
 
+			orderItems.add(ProductDTO.builder()
+					.name(product.get().getName())
+					.sku(product.get().getSku())
+					.quantity(item.quantity().longValue())
+					.price(product.get().getPrice())
+					.location(product.get().getLocation())
+					.stockStatus(product.get().getStockStatus())
+					.build());
 		}
 		
 		productRepo.saveAll(productsToSave);
-		
-		ConfirmedOrderDTO confirmedOrder = ConfirmedOrderDTO.builder()
+
+		ConfirmedOrderDTO confirmedOrder = getConfirmedOrderDTO(order, organizationId, orderItems);
+
+		snsPublisherService.publishOrderStatusEvent(new OrderStatusUpdateDTO(order.orderId(), OrderStatus.CONFIRMED));
+		snsPublisherService.publishInventoryAllocatedEvent(confirmedOrder);
+	}
+
+	private ConfirmedOrderDTO getConfirmedOrderDTO(OrderDTO order, UUID organizationId, List<ProductDTO> orderItems) {
+		return ConfirmedOrderDTO.builder()
 				.orderId(order.orderId())
 				.orgId(organizationId)
 				.customerName(order.customerName())
@@ -170,18 +183,18 @@ public class InventoryService {
 				.customerAddress(order.customerAddress())
 				.orderCurrentStatus(OrderStatus.CONFIRMED)
 				.totalAmount(order.totalAmount())
-				.products(products)
+				.products(orderItems)
 				.build();
-		
-		snsPublisherService.publishOrderStatusEvent(new OrderStatusUpdateDTO(order.orderId(), OrderStatus.CONFIRMED));
-		snsPublisherService.publishInventoryAllocatedEvent(confirmedOrder);
-		
 	}
 
 	private void validateSku(String sku, UUID orgId) {
 		if (productRepo.existsBySkuAndOrgId(sku, orgId)) {
 			throw new SkuAlreadyExistException("A product with sku " + sku + " already exists");
 		}
+	}
+	
+	private void publishOrderCancelEvent(OrderDTO order) {
+		snsPublisherService.publishOrderStatusEvent(new OrderStatusUpdateDTO(order.orderId(), OrderStatus.CANCELED));
 	}
 
 }
