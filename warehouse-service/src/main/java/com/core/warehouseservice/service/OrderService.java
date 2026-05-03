@@ -1,11 +1,9 @@
 package com.core.warehouseservice.service;
 
 import com.core.warehouseservice.domain.Order;
+import com.core.warehouseservice.domain.OrderStatus;
 import com.core.warehouseservice.domain.OrderWarehouseStatus;
-import com.core.warehouseservice.dto.ConfirmedOrderEventDTO;
-import com.core.warehouseservice.dto.OrderDTO;
-import com.core.warehouseservice.dto.OrderSummaryDTO;
-import com.core.warehouseservice.dto.ShipmentDTO;
+import com.core.warehouseservice.dto.*;
 import com.core.warehouseservice.exceptions.OrderLockedException;
 import com.core.warehouseservice.exceptions.OrderNotFoundException;
 import com.core.warehouseservice.mapper.OrderMapper;
@@ -25,6 +23,7 @@ public class OrderService {
 
     private final OrderMapper orderMapper;
     private final OrderRepository orderRepository;
+    private final SNSPublisherService snsPublisherService;
 
     private static final long PICKING_ORDER_LOCK_DURATION_MINUTES = 15;
 
@@ -58,6 +57,7 @@ public class OrderService {
         order.setOrderStatus(OrderWarehouseStatus.IN_PROGRESS);
         order.setLockExpiryTime(now.plus(PICKING_ORDER_LOCK_DURATION_MINUTES, ChronoUnit.MINUTES));
         orderRepository.save(order);
+        snsPublisherService.publishOrderStatusEvent(new OrderStatusUpdateDTO(order.getId(), OrderStatus.PROCESSING));
 
         return orderMapper.toOrderDTO(order);
     }
@@ -84,6 +84,7 @@ public class OrderService {
 
         order.setOrderStatus(OrderWarehouseStatus.SHIPPED);
         orderRepository.save(order);
+        snsPublisherService.publishOrderStatusEvent(new OrderStatusUpdateDTO(order.getId(), OrderStatus.SHIPPED));
     }
 
     @Transactional
@@ -94,6 +95,8 @@ public class OrderService {
         order.setOrderStatus(OrderWarehouseStatus.PACKED);
         order.setLockExpiryTime(null);
         orderRepository.save(order);
+        snsPublisherService.publishOrderStatusEvent(new OrderStatusUpdateDTO(order.getId(), OrderStatus.PACKED));
+
     }
 
 }
