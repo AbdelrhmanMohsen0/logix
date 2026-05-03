@@ -10,22 +10,17 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface OrderRepo extends JpaRepository<Order, UUID> {
-	
-	// This handles N+1 problem
-	@Query("SELECT o FROM Order o LEFT JOIN FETCH o.items WHERE o.id = :id")
-	Optional<Order> findByIdWithItems(@Param("id") UUID id);
-	
+
 	@Query("SELECT new com.core.orderservice.dto.OrderSummaryDTO(" +
-			"o.id, o.customerName, MIN(h.transitionedAt), o.currentStatus, o.totalAmount) " +
+			"o.id, o.customerName, h.transitionedAt, o.currentStatus, o.totalAmount) " +
 			"FROM Order o " +
-			"JOIN o.statusHistory h " + // Join to get the dates
-			"WHERE o.organizationId = :orgId " + // Security/Org filter
-			"GROUP BY o.id, o.customerName, o.currentStatus, o.totalAmount")
+			"JOIN o.statusHistory h " +
+			"WHERE o.organizationId = :orgId " +
+			"AND h.status = com.core.orderservice.domain.OrderStatus.CREATED " +
+			"ORDER BY h.transitionedAt DESC")
 	List<OrderSummaryDTO> findAllSummariesByOrg(@Param("orgId") UUID orgId);
 	
 	@Query("SELECT o FROM Order o LEFT JOIN FETCH o.items WHERE o.id = :id and o.organizationId = :orgId")
 	Optional<Order> getOrderByOrganizationIdAndOrderId (UUID orgId, UUID id);
-	
-	@Query("SELECT o FROM Order o LEFT JOIN FETCH o.items WHERE o.id = :id")
-	Optional<Order> findByOrderId (UUID id);
+
 }

@@ -58,7 +58,7 @@ public class OrderService {
 	
 	@Transactional
     public void changeStatus(UUID orderId, OrderStatus newStatus) {
-		Order order = orderRepo.findByOrderId(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
+		Order order = orderRepo.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
 
 		OrderStatusState newState = new OrderStatusState();
 		newState.setOrder(order);
