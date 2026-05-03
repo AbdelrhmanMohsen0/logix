@@ -130,7 +130,7 @@ public class InventoryService {
 		List<ProductDTO> products = new ArrayList<>();
 		List<Product> productsToSave = new ArrayList<>();
 		
-		for(ItemDTO item :  order.items()){
+		for (ItemDTO item :  order.items()){
 
 			Optional<Product> product = productRepo.findProductBySku(item.sku());
 
@@ -140,11 +140,16 @@ public class InventoryService {
 				return;
 			}
 
-			if(!product.get().getOrgId().equals(organizationId)){
+			if (!product.get().getOrgId().equals(organizationId)){
 				throw new InvalidOrgIdException(organizationId);
 			}
 			
-			if(product.get().getQuantity() < item.quantity()){
+			if (product.get().getQuantity() < item.quantity()){
+				snsPublisherService.publishOrderStatusEvent(new OrderStatusUpdateDTO(order.orderId(), OrderStatus.CANCELED));
+				return;
+			}
+
+			if (!product.get().getPrice().equals(item.priceAtPurchase())) {
 				snsPublisherService.publishOrderStatusEvent(new OrderStatusUpdateDTO(order.orderId(), OrderStatus.CANCELED));
 				return;
 			}

@@ -15,23 +15,28 @@ import java.util.List;
 public class OrderMapper {
 
     public Order fromConfirmedOrderDTOtoOrder(ConfirmedOrderEventDTO confirmedOrderEventDTO){
-        return Order.builder()
+        Order order = Order.builder()
                 .id(confirmedOrderEventDTO.orderId())
                 .organizationId(confirmedOrderEventDTO.orgId())
                 .customerName(confirmedOrderEventDTO.customerName())
                 .customerPhone(confirmedOrderEventDTO.customerPhone())
                 .customerAddress(confirmedOrderEventDTO.customerAddress())
                 .orderStatus(OrderWarehouseStatus.PENDING)
-                .items(confirmedOrderEventDTO.products().stream().map(
-                        productDTO -> Item.builder()
-                                .sku(productDTO.sku())
-                                .name(productDTO.name())
-                                .location(productDTO.location())
-                                .quantity(productDTO.quantity())
-                                .build()
-                ).toList())
                 .totalAmount(confirmedOrderEventDTO.totalAmount())
                 .build();
+
+        List<Item> items = confirmedOrderEventDTO.products().stream()
+                .map(productDTO -> Item.builder()
+                        .sku(productDTO.sku())
+                        .name(productDTO.name())
+                        .location(productDTO.location())
+                        .quantity(productDTO.quantity())
+                        .order(order)
+                        .build())
+                .toList();
+
+        order.setItems(items);
+        return order;
     }
 
     public OrderDTO toOrderDTO(Order order){
