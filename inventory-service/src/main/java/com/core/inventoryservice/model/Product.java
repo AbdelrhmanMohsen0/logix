@@ -47,7 +47,7 @@ public class Product {
 	private String name;
 	
 	@NotNull
-	@Column(nullable = false, unique = true)
+	@Column(nullable = false)
 	private String sku;
 	
 	@NotNull

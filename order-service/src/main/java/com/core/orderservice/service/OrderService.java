@@ -59,6 +59,9 @@ public class OrderService {
 	@Transactional
     public void changeStatus(UUID orderId, OrderStatus newStatus) {
 		Order order = orderRepo.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
+		if (newStatus.equals(order.getCurrentStatus())) {
+			return;
+		}
 
 		OrderStatusState newState = new OrderStatusState();
 		newState.setOrder(order);
@@ -80,6 +83,5 @@ public class OrderService {
 
 		return orderMapper.toOrderDTO(order);
 	}
-	
 
 }
