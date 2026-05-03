@@ -20,15 +20,6 @@ public class GlobalExceptionHandler {
 
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
 	}
-	
-	@ExceptionHandler(InvalidOrgIdException.class)
-	public ResponseEntity<Map<String, Object>> handleInvalidOrdIdException(InvalidOrgIdException ex) {
-		Map<String, Object> body = new LinkedHashMap<>();
-		body.put("status", HttpStatus.NOT_FOUND.value());
-		body.put("message", ex.getMessage());
-
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
-	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {

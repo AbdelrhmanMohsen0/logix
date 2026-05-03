@@ -15,7 +15,6 @@ import com.core.inventoryservice.dto.OrderStatusUpdateDTO;
 import com.core.inventoryservice.dto.ProductDTO;
 import com.core.inventoryservice.dto.ShipmentItem;
 import com.core.inventoryservice.dto.ShipmentReceivedDTO;
-import com.core.inventoryservice.exception.InvalidOrgIdException;
 import com.core.inventoryservice.exception.ProductNotFoundException;
 import com.core.inventoryservice.exception.SkuAlreadyExistException;
 import com.core.inventoryservice.mapper.ProductMapper;
@@ -39,13 +38,9 @@ public class InventoryService {
 	
 	@Transactional
 	public ProductDTO updateProduct(CreateProductRequest dto, UUID orgId) {
-		Product product = productRepo.findProductBySku(dto.sku())
+		Product product = productRepo.findProductBySkuAndOrgId(dto.sku(), orgId)
 				.orElseThrow(() -> new ProductNotFoundException(dto.sku()));
 
-		if(!product.getOrgId().equals(orgId)){
-			throw new InvalidOrgIdException(orgId);
-		}
-		
 		product.setName(dto.name());
 		product.setSku(dto.sku());
 		product.setQuantity(dto.quantity());
@@ -63,13 +58,9 @@ public class InventoryService {
 		long totalNumberOfItems = 0L;
 		for(ShipmentItem item: shipmentRequest.items()){
 			
-			Product product = productRepo.findProductBySku(item.sku())
+			Product product = productRepo.findProductBySkuAndOrgId(item.sku(), orgId)
 					.orElseThrow(() -> new ProductNotFoundException(item.sku()));
-			
-			if(!product.getOrgId().equals(orgId)){
-				throw new InvalidOrgIdException(orgId);
-			}
-			
+
 			product.setQuantity(product.getQuantity() + item.quantity());
 			totalNumberOfItems += item.quantity();
 			productRepo.save(product);
@@ -115,13 +106,9 @@ public class InventoryService {
 	}
 	
 	public void deleteProduct(String sku, UUID orgId){
-		Product product = productRepo.findProductBySku(sku)
+		Product product = productRepo.findProductBySkuAndOrgId(sku, orgId)
 				.orElseThrow(() -> new ProductNotFoundException(sku));
-		
-		if(!product.getOrgId().equals(orgId)){
-			throw new InvalidOrgIdException(orgId);
-		}
-		
+
 		productRepo.delete(product);
 	}
 	
@@ -131,7 +118,7 @@ public class InventoryService {
 		List<Product> productsToSave = new ArrayList<>();
 		
 		for (ItemDTO item :  order.items()){
-			Optional<Product> product = productRepo.findProductBySku(item.sku());
+			Optional<Product> product = productRepo.findProductBySkuAndOrgId(item.sku(), organizationId);
 
 			if (product.isEmpty()) {
 				log.error("Product not found with SKU {}", item.sku());
@@ -139,10 +126,6 @@ public class InventoryService {
 				return;
 			}
 
-			if (!product.get().getOrgId().equals(organizationId)){
-				throw new InvalidOrgIdException(organizationId);
-			}
-			
 			if (product.get().getQuantity() < item.quantity()){
 				publishOrderCancelEvent(order);
 				return;

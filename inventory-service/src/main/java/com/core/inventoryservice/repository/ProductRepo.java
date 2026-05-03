@@ -30,7 +30,7 @@ public interface ProductRepo extends JpaRepository<Product, UUID> {
 			@Param("status") String status
 	);
 	
-	Optional<Product> findProductBySku(String sku);
+	Optional<Product> findProductBySkuAndOrgId(String sku, UUID orgId);
 
 	boolean existsBySkuAndOrgId(String sku, UUID orgId);
 }
