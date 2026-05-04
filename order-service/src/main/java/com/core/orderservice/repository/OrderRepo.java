@@ -1,10 +1,11 @@
 package com.core.orderservice.repository;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import com.core.orderservice.dto.OrderSummaryDTO;
 import com.core.orderservice.model.Order;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,7 +19,7 @@ public interface OrderRepo extends JpaRepository<Order, UUID> {
 			"WHERE o.organizationId = :orgId " +
 			"AND h.status = com.core.orderservice.domain.OrderStatus.CREATED " +
 			"ORDER BY h.transitionedAt DESC")
-	List<OrderSummaryDTO> findAllSummariesByOrg(@Param("orgId") UUID orgId);
+	Page<OrderSummaryDTO> findAllSummariesByOrg(Pageable pageable, @Param("orgId") UUID orgId);
 	
 	@Query("SELECT o FROM Order o LEFT JOIN FETCH o.items WHERE o.id = :id and o.organizationId = :orgId")
 	Optional<Order> getOrderByOrganizationIdAndOrderId (UUID orgId, UUID id);

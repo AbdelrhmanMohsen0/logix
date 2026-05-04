@@ -1,6 +1,5 @@
 package com.core.orderservice.service;
 
-import java.util.List;
 import java.util.UUID;
 import com.core.orderservice.domain.OrderStatus;
 import com.core.orderservice.dto.ItemDTO;
@@ -14,6 +13,8 @@ import com.core.orderservice.model.Order;
 import com.core.orderservice.model.OrderStatusState;
 import com.core.orderservice.repository.OrderRepo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,8 +77,8 @@ public class OrderService {
 		orderRepo.save(order);
 	}
 	
-	public List<OrderSummaryDTO> getOrderSummaries(UUID organizationId) {
-		return orderRepo.findAllSummariesByOrg(organizationId);
+	public Page<OrderSummaryDTO> getOrderSummaries(Pageable pageable, UUID organizationId) {
+		return orderRepo.findAllSummariesByOrg(pageable, organizationId);
 	}
 	
 	public OrderDTO getOrder(UUID orgId, UUID orderId) {

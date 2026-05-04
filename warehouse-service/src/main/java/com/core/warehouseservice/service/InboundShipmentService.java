@@ -6,9 +6,10 @@ import com.core.warehouseservice.dto.ReceivedShipmentEventDTO;
 import com.core.warehouseservice.mapper.InboundShipmentMapper;
 import com.core.warehouseservice.repository.InboundShipmentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -28,10 +29,9 @@ public class InboundShipmentService {
         inboundShipmentRepository.save(inboundShipment);
     }
 
-    public List<InboundShipmentDTO> getInboundShipments(UUID orgId) {
-        return inboundShipmentRepository.findAllByOrganizationId(orgId).stream()
-                .map(inboundShipmentMapper::toInboundShipmentDTO)
-                .toList();
+    public Page<InboundShipmentDTO> getInboundShipments(Pageable pageable, UUID orgId) {
+        return inboundShipmentRepository.findAllByOrganizationId(pageable, orgId)
+                .map(inboundShipmentMapper::toInboundShipmentDTO);
     }
 
 }
