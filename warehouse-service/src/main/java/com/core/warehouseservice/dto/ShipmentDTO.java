@@ -7,6 +7,7 @@ import java.util.UUID;
 @Builder
 public record ShipmentDTO(
         UUID orderId,
+        String orderDisplayIndex,
         String customerName,
         String customerAddress
 ) {

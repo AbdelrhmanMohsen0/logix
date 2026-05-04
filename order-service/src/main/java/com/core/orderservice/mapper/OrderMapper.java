@@ -31,6 +31,7 @@ public class OrderMapper {
 
         return new OrderDTO(
                 order.getId(),
+                "ORD-" + order.getOrderDisplayIndex(),
                 order.getCustomerName(),
                 order.getCustomerPhone(),
                 order.getCustomerAddress(),

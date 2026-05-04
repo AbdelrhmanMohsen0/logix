@@ -160,6 +160,7 @@ public class InventoryService {
 	private ConfirmedOrderDTO getConfirmedOrderDTO(OrderDTO order, UUID organizationId, List<ProductDTO> orderItems) {
 		return ConfirmedOrderDTO.builder()
 				.orderId(order.orderId())
+				.orderDisplayIndex(order.orderDisplayIndex())
 				.orgId(organizationId)
 				.customerName(order.customerName())
 				.customerPhone(order.customerPhone())

@@ -10,6 +10,7 @@ import java.util.UUID;
 @Builder
 public record ConfirmedOrderEventDTO(
 		UUID orderId,
+		String orderDisplayIndex,
 		UUID orgId,
 		String customerName,
 		String customerPhone,

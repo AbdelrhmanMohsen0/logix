@@ -24,6 +24,9 @@ public class Order {
 	@Column(nullable = false)
 	private UUID organizationId;
 
+	@Column(nullable = false)
+	private Long orderDisplayIndex;
+
 	@NotBlank
 	@Column(nullable = false)
 	private String customerName;

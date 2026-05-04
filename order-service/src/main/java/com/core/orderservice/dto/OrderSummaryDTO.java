@@ -6,6 +6,7 @@ import com.core.orderservice.domain.OrderStatus;
 
 public record OrderSummaryDTO(
 		UUID id,
+		String orderDisplayIndex,
 		String customerName,
 		Instant orderDate,
 		OrderStatus currentStatus,

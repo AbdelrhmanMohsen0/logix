@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public record OrderSummaryDTO(
         UUID orderId,
+        String orderDisplayIndex,
         Integer numberOfItems,
         OrderWarehouseStatus orderWarehouseStatus
 ) {

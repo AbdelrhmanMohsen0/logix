@@ -9,6 +9,7 @@ import java.util.UUID;
 @Builder
 public record OrderDTO(
     UUID orderId,
+    String orderDisplayIndex,
     OrderWarehouseStatus orderStatus,
     Integer numberOfItems,
     String labelURI,

@@ -19,7 +19,7 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     @Query("""
         SELECT new com.core.warehouseservice.dto.OrderSummaryDTO(
-            o.id, SIZE(o.items), o.orderStatus
+            o.id, o.orderDisplayIndex, SIZE(o.items), o.orderStatus
         )
         FROM Order o
         WHERE o.organizationId = :organizationId

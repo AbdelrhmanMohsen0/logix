@@ -30,6 +30,10 @@ public class Order {
 
     @NotBlank
     @Column(nullable = false)
+    private String orderDisplayIndex;
+
+    @NotBlank
+    @Column(nullable = false)
     private String customerName;
 
     @NotBlank

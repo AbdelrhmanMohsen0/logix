@@ -18,6 +18,7 @@ public class OrderMapper {
         Order order = Order.builder()
                 .id(confirmedOrderEventDTO.orderId())
                 .organizationId(confirmedOrderEventDTO.orgId())
+                .orderDisplayIndex(confirmedOrderEventDTO.orderDisplayIndex())
                 .customerName(confirmedOrderEventDTO.customerName())
                 .customerPhone(confirmedOrderEventDTO.customerPhone())
                 .customerAddress(confirmedOrderEventDTO.customerAddress())
@@ -49,6 +50,7 @@ public class OrderMapper {
 
         return OrderDTO.builder()
                 .orderId(order.getId())
+                .orderDisplayIndex(order.getOrderDisplayIndex())
                 .orderStatus(order.getOrderStatus())
                 .items(items)
                 .numberOfItems(items.size())
@@ -59,6 +61,7 @@ public class OrderMapper {
     public ShipmentDTO toShipmentDTO(Order order){
         return ShipmentDTO.builder()
                 .orderId(order.getId())
+                .orderDisplayIndex(order.getOrderDisplayIndex())
                 .customerName(order.getCustomerName())
                 .customerAddress(order.getCustomerAddress())
                 .build();

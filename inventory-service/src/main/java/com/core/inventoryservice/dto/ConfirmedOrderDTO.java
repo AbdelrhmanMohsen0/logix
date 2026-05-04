@@ -9,6 +9,7 @@ import lombok.Builder;
 @Builder
 public record ConfirmedOrderDTO(
 		UUID orderId,
+		String orderDisplayIndex,
 		UUID orgId,
 		String customerName,
 		String customerPhone,

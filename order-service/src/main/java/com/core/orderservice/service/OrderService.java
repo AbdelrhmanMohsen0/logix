@@ -40,7 +40,10 @@ public class OrderService {
 			item.setPriceAtPurchase(itemDto.priceAtPurchase());
 			order.addItem(item);
 		}
-		
+
+		Long maxIndex = orderRepo.findMaxDisplayIndexByOrg(organizationId);
+		order.setOrderDisplayIndex(maxIndex + 1);
+
 		order.setCurrentStatus(OrderStatus.CREATED);
 		
 		OrderStatusState newState = new OrderStatusState();
