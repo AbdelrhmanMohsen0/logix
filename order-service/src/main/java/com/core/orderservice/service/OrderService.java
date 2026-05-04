@@ -77,8 +77,10 @@ public class OrderService {
 		orderRepo.save(order);
 	}
 	
-	public Page<OrderSummaryDTO> getOrderSummaries(Pageable pageable, UUID organizationId) {
-		return orderRepo.findAllSummariesByOrg(pageable, organizationId);
+	public Page<OrderSummaryDTO> getOrderSummaries(Pageable pageable, UUID organizationId, String query) {
+		String searchPattern = (query != null && !query.trim().isEmpty()) ? query : "";
+
+		return orderRepo.findAllSummariesByOrg(pageable, organizationId, searchPattern);
 	}
 	
 	public OrderDTO getOrder(UUID orgId, UUID orderId) {

@@ -81,9 +81,10 @@ public class InventoryService {
 		return products.stream().map(productMapper::toProductDTO).toList();
 	}
 	
-	public Page<ProductDTO> findAllProducts(Pageable pageable, UUID orgId, ProductStatus stockFilter) {
-		Page<Product> products = productRepo.findAllByOrgIdAndStockStatus(pageable, orgId, stockFilter.name());
-		
+	public Page<ProductDTO> findAllProducts(Pageable pageable, UUID orgId, String query, ProductStatus stockFilter) {
+		String searchPattern = (query != null && !query.trim().isEmpty()) ? query : "";
+
+		Page<Product> products = productRepo.findAllByOrgIdAndStockStatus(pageable, orgId, searchPattern, stockFilter.name());
 		return products.map(productMapper::toProductDTO);
 	}
 	

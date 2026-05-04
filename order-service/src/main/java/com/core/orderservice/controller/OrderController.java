@@ -35,11 +35,12 @@ public class OrderController {
 	public ResponseEntity<PagedModel<OrderSummaryDTO>> getOrderSummaries(
 			@RequestParam(value = "page", defaultValue = "0") int page,
 			@RequestParam(value = "size", defaultValue = "10") int size,
+			@RequestParam(required = false) String query,
 			JwtAuthenticationToken auth){
 		UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
 
 		Pageable pageable = PageRequest.of(page, size);
-		Page<OrderSummaryDTO> orderSummaries = orderService.getOrderSummaries(pageable, orgId);
+		Page<OrderSummaryDTO> orderSummaries = orderService.getOrderSummaries(pageable, orgId, query);
 
 		return ResponseEntity.ok(new PagedModel<>(orderSummaries));
 	}

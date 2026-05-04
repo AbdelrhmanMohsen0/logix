@@ -18,15 +18,18 @@ public interface ProductRepo extends JpaRepository<Product, UUID> {
 			"LIMIT 5", nativeQuery = true)
 	List<Product> searchTop5(UUID orgId, String query);
 
-	@Query("SELECT p FROM Product p WHERE p.orgId = :orgId AND (" +
-			":status = 'ALL' OR " +
+	@Query("SELECT p FROM Product p WHERE p.orgId = :orgId " +
+			"AND (:status = 'ALL' OR " +
 			"(:status = 'OUT_OF_STOCK' AND p.quantity = 0) OR " +
 			"(:status = 'LOW_STOCK' AND p.quantity > 0 AND p.quantity < p.threshold) OR " +
 			"(:status = 'IN_STOCK' AND p.quantity >= p.threshold)) " +
+			"AND (:query IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%')) " +
+			"OR LOWER(p.sku) LIKE LOWER(CONCAT('%', :query, '%'))) " +
 			"ORDER BY p.createdAt DESC")
 	Page<Product> findAllByOrgIdAndStockStatus(
 			Pageable pageable,
 			@Param("orgId") UUID orgId,
+			@Param("query") String query,
 			@Param("status") String status
 	);
 	
