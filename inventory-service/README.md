@@ -195,9 +195,10 @@ Retrieves a paginated list of products.
 | :--- | :--- | :--- | :--- |
 | `page` | integer | `0` | The page number to fetch. |
 | `size` | integer | `10` | The number of records per page. |
+| `query` | string | `null` | Optional search term to filter products by name or SKU. |
 | `stock` | string | `ALL` | Filter by stock status. Options: `IN_STOCK`, `LOW_STOCK`, `OUT_OF_STOCK`, `ALL`. |
 
-**Example URL:** `/products?page=0&size=20&stock=LOW_STOCK`
+**Example URL:** `/products?page=0&size=20&query=Keyboard&stock=LOW_STOCK`
 
 ### Responses
 

@@ -68,12 +68,13 @@ Creates a new order for the authenticated user's organization.
 ```
 
 #### Success Response (200 OK)
-Returns the created `OrderDTO` with the initial status set to `CREATED`.
+Returns the created `OrderDTO` with the initial status set to `CREATED` and an automatically generated `orderDisplayIndex`.
 
 **Example Response:**
 ```json
 {
   "orderId": "550e8400-e29b-41d4-a716-446655440000",
+  "orderDisplayIndex": "1001",
   "customerName": "Jane Doe",
   "customerPhone": "+1234567890",
   "customerAddress": "123 Tech Lane, Silicon Valley, CA",
@@ -120,44 +121,66 @@ If required fields are missing or rules are violated (e.g., negative quantity, e
 ---
 
 ### 2. Get Order Summaries
-Retrieves a lightweight list of all orders belonging to the authenticated user's organization.
+Retrieves a paginated list of order summaries belonging to the authenticated user's organization, with optional search capabilities.
 
 * **Method:** `GET`
 * **Path:** `/orders`
 
 #### Request Parameters
-None.
+| Parameter | Type | Required | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `page` | Integer | No | `0` | The page number to retrieve (0-indexed). |
+| `size` | Integer | No | `10` | The number of records per page. |
+| `query` | String | No | | An optional search string to filter the orders. |
 
 #### Success Response (200 OK)
-Returns an array of `OrderSummaryDTO`.
+Returns a `PagedModel` wrapping a list of `OrderSummaryDTO` elements.
 
 **Example Response:**
 ```json
-[
-  {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "customerName": "Jane Doe",
-    "orderDate": "2023-10-27T14:32:00Z",
-    "currentStatus": "CREATED",
-    "totalAmount": 1250.50
-  },
-  {
-    "id": "a12b345c-678d-90ef-1234-56789abcdef0",
-    "customerName": "Acme Corp",
-    "orderDate": "2023-10-26T09:15:00Z",
-    "currentStatus": "SHIPPED",
-    "totalAmount": 4500.00
+{
+  "content": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "orderDisplayIndex": "1001",
+      "customerName": "Jane Doe",
+      "orderDate": "2023-10-27T14:32:00Z",
+      "currentStatus": "CREATED",
+      "totalAmount": 1250.50
+    },
+    {
+      "id": "a12b345c-678d-90ef-1234-56789abcdef0",
+      "orderDisplayIndex": "1002",
+      "customerName": "Acme Corp",
+      "orderDate": "2023-10-26T09:15:00Z",
+      "currentStatus": "SHIPPED",
+      "totalAmount": 4500.00
+    }
+  ],
+  "page": {
+    "size": 10,
+    "totalElements": 2,
+    "totalPages": 1,
+    "number": 0
   }
-]
+}
 ```
 
 #### Edge Cases
 **200 OK (Empty State)**
-If the organization has no orders, the API will return an empty array, not an error.
+If the organization has no orders matching the criteria, the API will return a PagedModel with an empty `content` array.
 
 *Example Response:*
 ```json
-[]
+{
+  "content": [],
+  "page": {
+    "size": 10,
+    "totalElements": 0,
+    "totalPages": 0,
+    "number": 0
+  }
+}
 ```
 
 ---
@@ -180,6 +203,7 @@ Returns the full `OrderDTO` including line items and status transition history.
 ```json
 {
   "orderId": "a12b345c-678d-90ef-1234-56789abcdef0",
+  "orderDisplayIndex": "1002",
   "customerName": "Acme Corp",
   "customerPhone": "+1987654321",
   "customerAddress": "99 Industrial Pkwy",
@@ -221,10 +245,7 @@ If the order ID does not exist, or if it belongs to a *different* organization (
 *Example Response:*
 ```json
 {
-  "timestamp": "2023-10-27T15:00:00Z",
   "status": 404,
-  "error": "Not Found",
-  "message": "Order with id a12b345c-678d-90ef-1234-56789abcdef0 not found",
-  "path": "/orders/a12b345c-678d-90ef-1234-56789abcdef0"
+  "message": "Order not found with id: a12b345c-678d-90ef-1234-56789abcdef0"
 }
 ```
