@@ -1,13 +1,20 @@
 import React from 'react';
 import { AuthAPI, UserAPI, OrderAPI, TokenService } from '../../services/api';
+import Pagination from '../../components/Pagination';
+import { useAuth } from '../../context/AuthContext';
 
 function UserListPage({ searchQuery, onNavigate }) {
+  const { user } = useAuth();
   const [users, setUsers] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
   const [deleteId, setDeleteId] = React.useState(null); // for confirm dialog
   const [deleteLoading, setDeleteLoading] = React.useState(false);
   const [successMsg, setSuccessMsg] = React.useState("");
+  
+  const [page, setPage] = React.useState(0);
+  const pageSize = 10;
+
   const fetchUsers = React.useCallback(async () => {
     setLoading(true);
     setError("");
@@ -53,6 +60,8 @@ function UserListPage({ searchQuery, onNavigate }) {
       (u.email && u.email.toLowerCase().includes(q))
     );
   });
+  
+  const paginatedUsers = filteredUsers.slice(page * pageSize, (page + 1) * pageSize);
 
   return (
     <div>
@@ -162,7 +171,7 @@ function UserListPage({ searchQuery, onNavigate }) {
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((u) =>
+                paginatedUsers.map((u) =>
                   <tr key={u.id}>
                     <td className="font-medium">
                       {u.name}
@@ -194,7 +203,7 @@ function UserListPage({ searchQuery, onNavigate }) {
                           edit
                         </span>
                       </button>
-                      {u.role !== 'ROLE_OWNER' && u.role !== 'OWNER' && (
+                      {u.role !== 'ROLE_OWNER' && u.role !== 'OWNER' && u.id !== user?.id && (
                         <button
                           className="btn-ghost"
                           style={{
@@ -219,6 +228,13 @@ function UserListPage({ searchQuery, onNavigate }) {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={page}
+          totalPages={Math.ceil(filteredUsers.length / pageSize)}
+          totalElements={filteredUsers.length}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       </div>}
       {deleteId &&
         <div

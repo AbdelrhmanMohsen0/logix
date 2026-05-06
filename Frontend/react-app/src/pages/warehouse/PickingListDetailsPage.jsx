@@ -1,5 +1,5 @@
 import React from 'react';
-import { OrderAPI } from '../../services/api';
+import { WarehouseAPI } from '../../services/api';
 
 function PickingListDetailsPage({ listId, onNavigate }) {
   
@@ -10,14 +10,14 @@ function PickingListDetailsPage({ listId, onNavigate }) {
 
   const fetchOrder = React.useCallback(() => {
     setLoading(true);
-    OrderAPI.getOrder(listId)
+    WarehouseAPI.startPicking(listId)
       .then(data => {
         setOrder(data);
         setItems(data.items.map(it => ({
-          sku: it.SKU,
+          sku: it.sku,
           name: it.name,
           qty: it.quantity,
-          loc: "Zone A - Bin 1", // Mock location
+          loc: it.location,
           picked: false
         })));
       })
@@ -41,18 +41,19 @@ function PickingListDetailsPage({ listId, onNavigate }) {
     setItems(newItems);
   };
   
-  const handleStartWork = async () => {
+  const handleCancelWork = async () => {
+    if (!window.confirm("Are you sure you want to cancel picking? This order will be released to other workers.")) return;
     try {
-      await OrderAPI.updateOrderStatus(listId, "IN_PROGRESS");
-      fetchOrder();
+      await WarehouseAPI.cancelPicking(listId);
+      onNavigate("picking-lists");
     } catch (err) {
       alert("Error: " + err.message);
     }
   };
-  
+
   const handleComplete = async () => {
     try {
-      await OrderAPI.updateOrderStatus(listId, "PACKED");
+      await WarehouseAPI.packOrder(listId);
       alert("Picking and Packing Completed! Status changed to PACKED.");
       onNavigate("picking-lists");
     } catch (err) {
@@ -123,19 +124,17 @@ function PickingListDetailsPage({ listId, onNavigate }) {
           </div>,
         )}
         <div style={{ marginTop: "2rem", display: "flex", justifyContent: "flex-end", gap: "1rem" }}>
-          {order?.orderStatus === "PENDING" && (
-            <button
-              className="btn btn-secondary"
-              onClick={handleStartWork}>
-              <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
-                play_arrow
-              </span>
-              Start Work
-            </button>
-          )}
+          <button
+            className="btn btn-secondary"
+            onClick={handleCancelWork}>
+            <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
+              cancel
+            </span>
+            Cancel Picking
+          </button>
           <button
             className="btn btn-primary"
-            disabled={!allPicked || order?.orderStatus === "PENDING"}
+            disabled={!allPicked}
             onClick={handleComplete}>
             Complete Picking
           </button>

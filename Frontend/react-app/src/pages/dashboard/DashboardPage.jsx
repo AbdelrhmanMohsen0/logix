@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useInventory } from '../../context/InventoryContext';
-import { OrderAPI } from '../../services/api';
+import { InventoryAPI, OrderAPI } from '../../services/api';
 
 function DashboardPage({ searchQuery, onNavigate }) {
   const { user, hasAccess } = useAuth();
   const role = (user?.role || '').replace('ROLE_', '');
-  const { items } = useInventory();
-  const lowStockItems = items.filter(i => i.qty < 50);
+  const [lowStockCount, setLowStockCount] = useState(0);
   const [timeRange, setTimeRange] = useState("Last 30 Days");
   const [hoveredBar, setHoveredBar] = useState(null);
   const [orders, setOrders] = useState([]);
   
   React.useEffect(() => {
     OrderAPI.getOrders().then(data => setOrders(data.slice(0, 4)));
+    InventoryAPI.getProducts(0, 1, "LOW_STOCK")
+      .then(data => setLowStockCount(data?.page?.totalElements || 0))
+      .catch(e => console.warn(e));
   }, []);
 
   const chartData = {
@@ -72,7 +73,7 @@ function DashboardPage({ searchQuery, onNavigate }) {
     {
       id: "low_stock",
       label: "Low Stock Alerts",
-      value: lowStockItems.length.toString(),
+      value: lowStockCount.toString(),
       icon: "warning",
       iconClass: "error",
       valueClass: "error-text",
@@ -93,9 +94,8 @@ function DashboardPage({ searchQuery, onNavigate }) {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return (
-      (row.id && row.id.toLowerCase().includes(q)) ||
-      (row.customerName && row.customerName.toLowerCase().includes(q)) ||
-      (row.supplierName && row.supplierName.toLowerCase().includes(q))
+      (row.orderId && row.orderId.toLowerCase().includes(q)) ||
+      (row.customerName && row.customerName.toLowerCase().includes(q))
     );
   });
   
@@ -166,9 +166,9 @@ function DashboardPage({ searchQuery, onNavigate }) {
             <div className={`kpi-value${k.valueClass ? " " + k.valueClass : ""}`}>
               {k.value}
             </div>
-            {k.id === "low_stock" && lowStockItems.length > 0 && (
+            {k.id === "low_stock" && lowStockCount > 0 && (
               <div style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)', marginTop: '0.25rem' }}>
-                {lowStockItems.length} items
+                {lowStockCount} items
               </div>
             )}
             <div className="kpi-trend">
@@ -394,7 +394,6 @@ function DashboardPage({ searchQuery, onNavigate }) {
               <tr>
                 <th>Order ID</th>
                 <th>Customer Name</th>
-                <th>Supplier Name</th>
                 <th>Items</th>
                 <th>Quantity</th>
                 <th>Price</th>
@@ -414,24 +413,23 @@ function DashboardPage({ searchQuery, onNavigate }) {
                 filteredActivity.map((row, i) => (
                   <tr key={i}>
                     <td className="font-medium" style={{ fontFamily: "monospace", fontSize: "0.8125rem" }}>
-                      {row.id}
+                      {row.orderId}
                     </td>
                     <td className="font-medium">{row.customerName}</td>
-                    <td>{row.supplierName}</td>
                     <td>{row.items ? row.items.map(it => it.name).join(", ") : "—"}</td>
                     <td>{row.items ? row.items.reduce((sum, it) => sum + it.quantity, 0) : 0}</td>
                     <td className="font-medium">{formatCurrency(row.totalAmount)}</td>
-                    <td>{formatDate(row.createdAt)}</td>
+                    <td>{formatDate(row.statusHistory?.[0]?.transitionedAt)}</td>
                     <td>
-                      <span className={`status-badge ${statusClass(row.orderStatus)}`}>
-                        {row.orderStatus}
+                      <span className={`status-badge ${statusClass(row.orderCurrentStatus)}`}>
+                        {row.orderCurrentStatus}
                       </span>
                     </td>
                     <td style={{ textAlign: "right" }}>
                       <button
                         className="btn-ghost"
                         style={{ padding: "0.25rem" }}
-                        onClick={() => onNavigate("order-details:" + row.id)}>
+                        onClick={() => onNavigate("order-details:" + row.orderId)}>
                         <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
                           visibility
                         </span>

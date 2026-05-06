@@ -1,60 +1,85 @@
 import React from 'react';
-import { useInventory } from '../../context/InventoryContext';
+import { WarehouseAPI, InventoryAPI } from '../../services/api';
 
 function AddReceivedShipmentPage({ onNavigate }) {
-  const { updateInventoryItem } = useInventory();
   const [form, setForm] = React.useState({ shipmentId: "", supplier: "" });
-  const [items, setItems] = React.useState([
-    {
-      name: "High-Capacity Lithium Cell",
-      sku: "BAT-2023-HC",
-      qty: 400,
-      loc: "Zone A-04-B",
-    },
-    {
-      name: "Precision Control Board",
-      sku: "PCB-MOD-88",
-      qty: 120,
-      loc: "Zone C-12-F",
-    },
-    {
-      name: "Industrial Grade Housing",
-      sku: "HSN-IND-V2",
-      qty: 720,
-      loc: "Zone B-02-A",
-    },
-  ]);
+  const [items, setItems] = React.useState([]);
   const [showModal, setShowModal] = React.useState(false);
   const [modalForm, setModalForm] = React.useState({
-    name: "",
     sku: "",
     qty: 1,
-    loc: "",
   });
-  const handleSubmit = (e) => {
+  const [editIndex, setEditIndex] = React.useState(null);
+  const [formError, setFormError] = React.useState("");
+  const [modalError, setModalError] = React.useState("");
+  const [successMsg, setSuccessMsg] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setFormError("");
+    if (!form.shipmentId || !form.supplier) {
+      setFormError("Shipment Title and Supplier are required.");
+      return;
+    }
+    if (items.length === 0) {
+      setFormError("Please add at least one item to the shipment.");
+      return;
+    }
+    
+    setLoading(true);
     try {
-      items.forEach(it => {
-        // Just mock updating the inventory (using sku, name, loc, etc.)
-        // We'll update the quantity if the SKU matches, otherwise we'd need addInventoryItem
-        updateInventoryItem(it.sku, {
-          name: it.name,
-          qty: parseInt(it.qty, 10),
-          loc: it.loc
-        });
-      });
-      alert("Shipment Received! Stock added to inventory.");
-      onNavigate("inbound-shipments");
+      const payload = {
+        shipmentId: form.shipmentId,
+        supplierName: form.supplier,
+        items: items.map(it => ({
+          sku: it.sku,
+          quantity: parseInt(it.qty, 10)
+        }))
+      };
+      await InventoryAPI.processShipment(payload);
+      setSuccessMsg("Shipment Received! Stock added to inventory.");
+      setTimeout(() => onNavigate("inbound-shipments"), 1500);
     } catch (err) {
-      alert("Error adding shipment: " + err.message);
+      setFormError("Error adding shipment: " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
+
   const handleAddItem = () => {
-    if (modalForm.name && modalForm.sku && modalForm.qty && modalForm.loc) {
-      setItems([...items, modalForm]);
-      setModalForm({ name: "", sku: "", qty: 1, loc: "" });
-      setShowModal(false);
+    if (!modalForm.sku || !modalForm.qty) {
+      setModalError("Please provide both SKU and Quantity.");
+      return;
     }
+    setModalError("");
+    if (editIndex !== null) {
+      const updated = [...items];
+      updated[editIndex] = modalForm;
+      setItems(updated);
+      setEditIndex(null);
+    } else {
+      setItems([...items, modalForm]);
+    }
+    setModalForm({ sku: "", qty: 1 });
+    setShowModal(false);
+  };
+
+  const handleEditItem = (idx) => {
+    setEditIndex(idx);
+    setModalForm(items[idx]);
+    setShowModal(true);
+  };
+
+  const handleDeleteItem = (idx) => {
+    const updated = items.filter((_, i) => i !== idx);
+    setItems(updated);
+  };
+
+  const openNewItemModal = () => {
+    setEditIndex(null);
+    setModalForm({ sku: "", qty: 1 });
+    setShowModal(true);
   };
   return (
     <div>
@@ -68,6 +93,16 @@ function AddReceivedShipmentPage({ onNavigate }) {
           </p>
         </div>
       </div>
+      {successMsg && (
+        <div style={{ marginBottom: "2rem", padding: "1rem", borderRadius: "0.5rem", background: "rgba(40, 167, 69, 0.1)", color: "#28a745", fontWeight: "600" }}>
+          {successMsg}
+        </div>
+      )}
+      {formError && (
+        <div style={{ marginBottom: "2rem", padding: "1rem", borderRadius: "0.5rem", background: "var(--error-container)", color: "var(--error)", fontWeight: "600" }}>
+          {formError}
+        </div>
+      )}
       <form onSubmit={handleSubmit}>
         <div
           style={{
@@ -78,7 +113,7 @@ function AddReceivedShipmentPage({ onNavigate }) {
           }}>
           <div className="form-group">
             <label style={{ fontWeight: "600" }}>
-              Shipment ID
+              Shipment Title
             </label>
             <input
               className="form-input"
@@ -115,7 +150,7 @@ function AddReceivedShipmentPage({ onNavigate }) {
             type="button"
             className="btn btn-primary"
             style={{ padding: "0.625rem 1.25rem", borderRadius: "0.5rem" }}
-            onClick={() => setShowModal(true)}>
+            onClick={openNewItemModal}>
             <span
               className="material-symbols-outlined"
               style={{ marginRight: "0.5rem", fontSize: "1.25rem" }}>
@@ -130,53 +165,56 @@ function AddReceivedShipmentPage({ onNavigate }) {
               <thead>
                 <tr>
                   <th>
-                    PRODUCT
+                    SKU
                   </th>
                   <th>
                     QUANTITY
                   </th>
-                  <th>
-                    LOCATION
+                  <th style={{ textAlign: "right" }}>
+                    ACTIONS
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((it, idx) =>
-                  <tr key={idx}>
-                    <td>
-                      <div
-                        style={{
-                          fontWeight: "700",
-                          color: "var(--on-surface)",
-                        }}>
-                        {it.name}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: "0.75rem",
-                          color: "var(--on-surface-variant)",
-                        }}>
-                        {"SKU: " + it.sku}
-                      </div>
+                {items.length === 0 ? (
+                  <tr>
+                    <td colSpan="3" style={{ textAlign: "center", padding: "2rem", color: "var(--on-surface-variant)" }}>
+                      No items added yet. Click "Add Product" to begin.
                     </td>
-                    <td style={{ fontWeight: "600", color: "var(--on-surface)" }}>
-                      {it.qty}
-                    </td>
-                    <td>
-                      <span
-                        className="status-badge default"
-                        style={{
-                          background: "rgba(53, 37, 205, 0.1)",
-                          color: "var(--primary)",
-                          padding: "0.375rem 0.75rem",
-                          borderRadius: "1rem",
-                          fontSize: "0.75rem",
-                          fontWeight: "600",
-                        }}>
-                        {it.loc}
-                      </span>
-                    </td>
-                  </tr>,
+                  </tr>
+                ) : (
+                  items.map((it, idx) =>
+                    <tr key={idx}>
+                      <td>
+                        <div
+                          style={{
+                            fontWeight: "700",
+                            color: "var(--on-surface)",
+                          }}>
+                          {it.sku}
+                        </div>
+                      </td>
+                      <td style={{ fontWeight: "600", color: "var(--on-surface)" }}>
+                        {it.qty}
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        <button
+                          type="button"
+                          className="btn-ghost"
+                          onClick={() => handleEditItem(idx)}
+                          style={{ padding: "0.25rem", marginRight: "0.5rem" }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-ghost"
+                          onClick={() => handleDeleteItem(idx)}
+                          style={{ padding: "0.25rem", color: "var(--error)" }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>delete</span>
+                        </button>
+                      </td>
+                    </tr>
+                  )
                 )}
               </tbody>
             </table>
@@ -226,46 +264,20 @@ function AddReceivedShipmentPage({ onNavigate }) {
                 marginBottom: "0.5rem",
                 color: "var(--on-surface)",
               }}>
-              Add Item to Shipment
+              {editIndex !== null ? "Edit Item" : "Add Item"}
             </h3>
             <p
               style={{
                 color: "var(--on-surface-variant)",
                 marginBottom: "2rem",
               }}>
-              Enter item details and storage location.
+              Enter the SKU and quantity of the received product.
             </p>
-            <div className="form-group" style={{ marginBottom: "1.5rem" }}>
-              <label style={{ fontWeight: "600", color: "var(--on-surface)" }}>
-                Item
-              </label>
-              <div style={{ position: "relative" }}>
-                <span
-                  className="material-symbols-outlined"
-                  style={{
-                    position: "absolute",
-                    left: "1rem",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "var(--on-surface-variant)",
-                  }}>
-                  search
-                </span>
-                <input
-                  className="form-input"
-                  style={{
-                    paddingLeft: "2.75rem",
-                    background: "#f8f9ff",
-                    border: "1px solid var(--surface-container-high)",
-                  }}
-                  type="text"
-                  placeholder="Item"
-                  required={true}
-                  value={modalForm.name}
-                  onChange={(e) =>
-                    setModalForm({ ...modalForm, name: e.target.value })} />
+            {modalError && (
+              <div style={{ marginBottom: "1rem", color: "var(--error)", fontWeight: "600" }}>
+                {modalError}
               </div>
-            </div>
+            )}
             <div className="form-group" style={{ marginBottom: "1.5rem" }}>
               <label style={{ fontWeight: "600", color: "var(--on-surface)" }}>
                 SKU
@@ -280,44 +292,22 @@ function AddReceivedShipmentPage({ onNavigate }) {
                 onChange={(e) =>
                   setModalForm({ ...modalForm, sku: e.target.value })} />
             </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "1rem",
-                marginBottom: "2rem",
-              }}>
-              <div className="form-group">
-                <label style={{ fontWeight: "600", color: "var(--on-surface)" }}>
-                  Quantity
-                </label>
-                <input
-                  className="form-input"
-                  style={{ background: "#fcfbfe" }}
-                  type="number"
-                  min="1"
-                  required={true}
-                  value={modalForm.qty}
-                  onChange={(e) =>
-                    setModalForm({
-                      ...modalForm,
-                      qty: parseInt(e.target.value) || 1,
-                    })} />
-              </div>
-              <div className="form-group">
-                <label style={{ fontWeight: "600", color: "var(--on-surface)" }}>
-                  Location
-                </label>
-                <input
-                  className="form-input"
-                  style={{ background: "#fcfbfe" }}
-                  type="text"
-                  placeholder="Zone-Aisle-Bin"
-                  required={true}
-                  value={modalForm.loc}
-                  onChange={(e) =>
-                    setModalForm({ ...modalForm, loc: e.target.value })} />
-              </div>
+            <div className="form-group" style={{ marginBottom: "2rem" }}>
+              <label style={{ fontWeight: "600", color: "var(--on-surface)" }}>
+                Quantity
+              </label>
+              <input
+                className="form-input"
+                style={{ background: "#fcfbfe" }}
+                type="number"
+                min="1"
+                required={true}
+                value={modalForm.qty}
+                onChange={(e) =>
+                  setModalForm({
+                    ...modalForm,
+                    qty: parseInt(e.target.value) || "",
+                  })} />
             </div>
             <div
               style={{

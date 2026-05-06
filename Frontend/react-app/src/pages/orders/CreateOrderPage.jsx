@@ -1,9 +1,7 @@
 import React from 'react';
-import { AuthAPI, UserAPI, OrderAPI, TokenService } from '../../services/api';
-import { useInventory } from '../../context/InventoryContext';
+import { OrderAPI, InventoryAPI } from '../../services/api';
 
 function CreateOrderPage({ onNavigate }) {
-  const { items: inventoryItems, updateInventoryItem } = useInventory();
   const emptyItem = () => ({
     SKU: "",
     name: "",
@@ -20,6 +18,22 @@ function CreateOrderPage({ onNavigate }) {
   const [loading, setLoading] = React.useState(false);
   const [showModal, setShowModal] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [suggestedProducts, setSuggestedProducts] = React.useState([]);
+
+  React.useEffect(() => {
+    if (!searchQuery.trim()) {
+      InventoryAPI.getProducts(0, 5, "ALL")
+        .then(data => setSuggestedProducts(data?.content || []))
+        .catch(() => setSuggestedProducts([]));
+      return;
+    }
+    const timer = setTimeout(() => {
+      InventoryAPI.searchProducts(searchQuery)
+        .then(data => setSuggestedProducts((data || []).slice(0, 5)))
+        .catch(() => setSuggestedProducts([]));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const handleSelectProduct = (prod) => {
     setItems((prev) => {
@@ -94,23 +108,13 @@ function CreateOrderPage({ onNavigate }) {
       const payload = {
         ...form,
         items: items.map((it) => ({
-          SKU: it.SKU,
+          sku: it.SKU,
           name: it.name,
           quantity: parseInt(it.quantity, 10),
           priceAtPurchase: parseFloat(it.priceAtPurchase),
         })),
       };
-      
-      // Inventory reduction
-      payload.items.forEach(it => {
-        const inventoryItem = inventoryItems.find(i => i.sku === it.SKU);
-        if (inventoryItem) {
-          updateInventoryItem(it.SKU, {
-            qty: Math.max(0, inventoryItem.qty - it.quantity)
-          });
-        }
-      });
-      
+
       await OrderAPI.createOrder(payload);
       onNavigate("orders");
     } catch (err) {
@@ -275,16 +279,20 @@ function CreateOrderPage({ onNavigate }) {
                 <input
                   className="form-input"
                   type="text"
-                  placeholder="ELEC-001"
+                  placeholder="Select from inventory..."
                   value={item.SKU}
+                  disabled={true}
+                  style={{ opacity: 0.6, cursor: "not-allowed" }}
                   onChange={(e) => handleItemChange(idx, "SKU", e.target.value)} />
               </div>
               <div className="form-group">
                 <input
                   className="form-input"
                   type="text"
-                  placeholder="Product name"
+                  placeholder="Select from inventory..."
                   value={item.name}
+                  disabled={true}
+                  style={{ opacity: 0.6, cursor: "not-allowed" }}
                   onChange={(e) => handleItemChange(idx, "name", e.target.value)} />
               </div>
               <div className="form-group">
@@ -453,91 +461,87 @@ function CreateOrderPage({ onNavigate }) {
                   flexDirection: "column",
                   gap: "0.5rem",
                 }}>
-                {inventoryItems
-                  .filter(
-                    (p) =>
-                      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      p.sku.toLowerCase().includes(searchQuery.toLowerCase()),
-                  )
+                {suggestedProducts
                   .map((prod, idx) => {
-                    const inStock = prod.qty > 0;
+                    const inStock = (prod.quantity || prod.qty || 0) > 0;
                     const stockText = inStock ? "IN STOCK" : "OUT OF STOCK";
                     return (
-                    <div
-                      key={idx}
-                      onClick={() => handleSelectProduct(prod)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: "0.75rem",
-                        borderRadius: "var(--radius-md)",
-                        cursor: "pointer",
-                        transition: "background 0.2s",
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.background =
-                          "var(--surface-container-low)")}
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.background = "transparent")}>
                       <div
+                        key={idx}
+                        onClick={() => handleSelectProduct(prod)}
                         style={{
                           display: "flex",
                           alignItems: "center",
-                          gap: "1rem",
-                        }}>
+                          justifyContent: "space-between",
+                          padding: "0.75rem",
+                          borderRadius: "var(--radius-md)",
+                          cursor: "pointer",
+                          transition: "background 0.2s",
+                        }}
+                        onMouseEnter={(e) =>
+                        (e.currentTarget.style.background =
+                          "var(--surface-container-low)")}
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.background = "transparent")}>
                         <div
                           style={{
-                            width: "2.5rem",
-                            height: "2.5rem",
-                            borderRadius: "var(--radius-sm)",
-                            background: "var(--surface-container-low)",
                             display: "flex",
                             alignItems: "center",
-                            justifyContent: "center",
-                            color: "var(--primary)",
+                            gap: "1rem",
                           }}>
-                          <span className="material-symbols-outlined" style={{ fontSize: "1.25rem" }}>
-                            {prod.icon || "inventory_2"}
-                          </span>
-                        </div>
-                        <div>
                           <div
                             style={{
-                              fontWeight: 600,
-                              fontSize: "0.9375rem",
-                              color: "var(--on-surface)",
+                              width: "2.5rem",
+                              height: "2.5rem",
+                              borderRadius: "var(--radius-sm)",
+                              background: "var(--surface-container-low)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "var(--primary)",
                             }}>
-                            {prod.name}
+                            <span className="material-symbols-outlined" style={{ fontSize: "1.25rem" }}>
+                              {prod.icon || "inventory_2"}
+                            </span>
                           </div>
-                          <div
-                            style={{
-                              fontSize: "0.75rem",
-                              color: "var(--on-surface-variant)",
-                            }}>
-                            {"SKU: " + prod.sku}
+                          <div>
+                            <div
+                              style={{
+                                fontWeight: 600,
+                                fontSize: "0.9375rem",
+                                color: "var(--on-surface)",
+                              }}>
+                              {prod.name}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: "0.75rem",
+                                color: "var(--on-surface-variant)",
+                              }}>
+                              {"SKU: " + prod.sku}
+                            </div>
                           </div>
                         </div>
+                        <div
+                          style={{
+                            fontSize: "0.6875rem",
+                            fontWeight: 600,
+                            padding: "0.25rem 0.625rem",
+                            borderRadius: "var(--radius-sm)",
+                            background:
+                              inStock
+                                ? "rgba(53, 37, 205, 0.1)"
+                                : "rgba(186, 26, 26, 0.1)",
+                            color:
+                              inStock
+                                ? "var(--primary)"
+                                : "var(--error)",
+                          }}>
+                          {stockText}
+                        </div>
                       </div>
-                      <div
-                        style={{
-                          fontSize: "0.6875rem",
-                          fontWeight: 600,
-                          padding: "0.25rem 0.625rem",
-                          borderRadius: "var(--radius-sm)",
-                          background:
-                            inStock
-                              ? "rgba(53, 37, 205, 0.1)"
-                              : "rgba(186, 26, 26, 0.1)",
-                          color:
-                            inStock
-                              ? "var(--primary)"
-                              : "var(--error)",
-                        }}>
-                        {stockText}
-                      </div>
-                    </div>
-                  )})}
+                    )
+                  })}
               </div>
             </div>
             <div

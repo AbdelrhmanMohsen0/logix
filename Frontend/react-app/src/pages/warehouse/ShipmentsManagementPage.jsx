@@ -1,46 +1,51 @@
 import React from 'react';
-import { OrderAPI } from '../../services/api';
+import { WarehouseAPI } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 function ShipmentsManagementPage({ searchQuery, onNavigate }) {
   const [orders, setOrders] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
+  
+  const [page, setPage] = React.useState(0);
+  const pageSize = 10;
 
-  React.useEffect(() => {
-    OrderAPI.getOrders().then((data) => {
-      setOrders(data);
-      setLoading(false);
-    });
+  const fetchShipments = React.useCallback(() => {
+    setLoading(true);
+    WarehouseAPI.getOutbound()
+      .then((data) => {
+        setOrders(data || []);
+      })
+      .catch((err) => {
+        console.error(err);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleUpdateStatus = async (id, status) => {
+  React.useEffect(() => {
+    fetchShipments();
+  }, [fetchShipments]);
+
+  const handleShip = async (orderId) => {
     try {
-      await OrderAPI.updateOrderStatus(id, status);
-      const updated = await OrderAPI.getOrders();
-      setOrders(updated);
+      await WarehouseAPI.shipOrder(orderId);
+      alert("Order marked as shipped!");
+      fetchShipments(); // refresh list
     } catch (e) {
       console.error(e);
+      alert("Error shipping order: " + e.message);
     }
   };
 
   const filteredOrders = orders.filter(s => {
-    if (!["PACKED", "SHIPPED", "DELIVERED"].includes(s.orderStatus)) return false;
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return (
-      (s.id && s.id.toLowerCase().includes(q)) ||
-      (s.customerName && s.customerName.toLowerCase().includes(q)) ||
-      (s.supplierName && s.supplierName.toLowerCase().includes(q))
+      (s.orderId && s.orderId.toLowerCase().includes(q)) ||
+      (s.customerName && s.customerName.toLowerCase().includes(q))
     );
   });
-
-  const formatCurrency = (n) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n || 0);
-
-  const formatDate = (d) => {
-    if (!d) return "—";
-    return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-  };
-  const statusClass = (s) => (s || "").toLowerCase();
+  
+  const paginatedOrders = filteredOrders.slice(page * pageSize, (page + 1) * pageSize);
 
   return (
     <div>
@@ -60,64 +65,38 @@ function ShipmentsManagementPage({ searchQuery, onNavigate }) {
             <thead>
               <tr>
                 <th>Order ID</th>
-                <th>Customer Name</th>
-                <th>Supplier Name</th>
-                <th>Items</th>
-                <th>Quantity</th>
-                <th>Price</th>
-                <th>Date</th>
-                <th>Status</th>
+                <th>Customer</th>
+                <th>Ship To</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="9" style={{ textAlign: "center", padding: "2rem" }}>Loading...</td></tr>
+                <tr><td colSpan="4" style={{ textAlign: "center", padding: "2rem" }}>Loading...</td></tr>
               ) : filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan="9" style={{ textAlign: "center", padding: "2rem" }}>
-                    No shipments found for "{searchQuery}"
+                  <td colSpan="4" style={{ textAlign: "center", padding: "2rem" }}>
+                    {searchQuery ? `No shipments found for "${searchQuery}"` : "No packed orders ready for shipment."}
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map((o) => (
-                  <tr key={o.id}>
+                paginatedOrders.map((o) => (
+                  <tr key={o.orderId}>
                     <td className="font-medium" style={{ fontFamily: "monospace", fontSize: "0.8125rem" }}>
-                      {o.id}
+                      {o.orderId}
                     </td>
                     <td className="font-medium">{o.customerName}</td>
-                    <td>{o.supplierName}</td>
-                    <td>{o.items ? o.items.map(i => i.name).join(", ") : "—"}</td>
-                    <td>{o.items ? o.items.reduce((sum, i) => sum + i.quantity, 0) : 0}</td>
-                    <td className="font-medium">{formatCurrency(o.totalAmount)}</td>
-                    <td>{formatDate(o.createdAt)}</td>
-                    <td>
-                      <span className={`status-badge ${statusClass(o.orderStatus)}`}>
-                        {o.orderStatus}
-                      </span>
-                    </td>
+                    <td>{o.customerAddress}</td>
                     <td>
                       <div style={{ textAlign: "right", display: "flex", gap: "0.25rem", justifyContent: "flex-end" }}>
-                      {o.orderStatus === "PACKED" && (
                         <button
                           className="btn-ghost"
                           title="Mark as Shipped"
-                          onClick={() => handleUpdateStatus(o.id, "SHIPPED")}>
+                          onClick={() => handleShip(o.orderId)}>
                           <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
                             local_shipping
                           </span>
                         </button>
-                      )}
-                      {o.orderStatus === "SHIPPED" && (
-                        <button
-                          className="btn-ghost"
-                          title="Mark as Delivered"
-                          onClick={() => handleUpdateStatus(o.id, "DELIVERED")}>
-                          <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
-                            task_alt
-                          </span>
-                        </button>
-                      )}
                       </div>
                     </td>
                   </tr>
@@ -126,6 +105,13 @@ function ShipmentsManagementPage({ searchQuery, onNavigate }) {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={page}
+          totalPages={Math.ceil(filteredOrders.length / pageSize)}
+          totalElements={filteredOrders.length}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       </div>
     </div>
   );

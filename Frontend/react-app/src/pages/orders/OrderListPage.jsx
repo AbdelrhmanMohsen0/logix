@@ -1,10 +1,15 @@
 import React from 'react';
 import { AuthAPI, UserAPI, OrderAPI, TokenService } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 function OrderListPage({ searchQuery, onNavigate }) {
   const [orders, setOrders] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
+  
+  const [page, setPage] = React.useState(0);
+  const pageSize = 10;
+
   React.useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -46,6 +51,8 @@ function OrderListPage({ searchQuery, onNavigate }) {
       (o.customerName && o.customerName.toLowerCase().includes(q))
     );
   });
+  
+  const paginatedOrders = filteredOrders.slice(page * pageSize, (page + 1) * pageSize);
 
   return (
     <div>
@@ -150,7 +157,7 @@ function OrderListPage({ searchQuery, onNavigate }) {
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map((o) =>
+                paginatedOrders.map((o) =>
                   <tr key={o.id}>
                     <td
                       className="font-medium"
@@ -200,6 +207,13 @@ function OrderListPage({ searchQuery, onNavigate }) {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={page}
+          totalPages={Math.ceil(filteredOrders.length / pageSize)}
+          totalElements={filteredOrders.length}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       </div>}
     </div>
   );

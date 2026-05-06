@@ -113,26 +113,63 @@ export const UserAPI = {
 /* ======== ORDER SERVICE ======== */
 export const OrderAPI = {
   async createOrder(data) {
-    return orderClient.post("/order", data);
+    return orderClient.post("/orders", data);
   },
   async getOrders() {
-    return orderClient.get("/");
+    return orderClient.get("/orders");
   },
   async getOrder(id) {
-    return orderClient.get(`/${id}`);
-  },
-  async updateOrderStatus(id, status) {
-    return orderClient.put(`/${id}/status`, { status });
+    return orderClient.get(`/orders/${id}`);
   },
 };
 
 /* ======== INVENTORY SERVICE ======== */
 export const InventoryAPI = {
-  async getItems() {
-    return inventoryClient.get("/inventory");
+  async getProducts(page = 0, size = 50, stock = "ALL") {
+    return inventoryClient.get(`/inventory/products?page=${page}&size=${size}&stock=${stock}`);
   },
-  async updateStock(id, qty) {
-    return inventoryClient.patch(`/inventory/${id}`, { qty });
+  async searchProducts(query) {
+    return inventoryClient.get(`/inventory/products/search?query=${query}`);
+  },
+  async createProduct(data) {
+    return inventoryClient.post("/inventory/products", data);
+  },
+  async updateProduct(data) {
+    return inventoryClient.put("/inventory/products", data);
+  },
+  async deleteProduct(sku) {
+    return inventoryClient.delete(`/inventory/products/${sku}`);
+  },
+  async processShipment(data) {
+    return inventoryClient.patch("/inventory/stock", data);
+  },
+};
+
+/* ======== WAREHOUSE SERVICE ======== */
+export const WarehouseAPI = {
+  async getInbound() {
+    return warehouseClient.get("/warehouse/inbound");
+  },
+  async receiveInbound(data) {
+    return warehouseClient.post("/warehouse/inbound", data);
+  },
+  async getPickingList() {
+    return warehouseClient.get("/warehouse/orders");
+  },
+  async startPicking(id) {
+    return warehouseClient.get(`/warehouse/orders/${id}`);
+  },
+  async packOrder(id) {
+    return warehouseClient.post(`/warehouse/orders/${id}/pack`);
+  },
+  async cancelPicking(id) {
+    return warehouseClient.post(`/warehouse/orders/${id}/cancel`);
+  },
+  async getOutbound() {
+    return warehouseClient.get("/warehouse/shipments");
+  },
+  async shipOrder(shipmentId) {
+    return warehouseClient.post(`/warehouse/shipments/${shipmentId}/ship`);
   },
 };
 
