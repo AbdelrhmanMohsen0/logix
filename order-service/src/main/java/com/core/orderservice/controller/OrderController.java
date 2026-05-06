@@ -1,6 +1,5 @@
 package com.core.orderservice.controller;
 
-import java.util.List;
 import java.util.UUID;
 import com.core.orderservice.dto.OrderDTO;
 import com.core.orderservice.dto.OrderRequest;
@@ -8,14 +7,14 @@ import com.core.orderservice.dto.OrderSummaryDTO;
 import com.core.orderservice.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -33,9 +32,17 @@ public class OrderController {
 	
 	@GetMapping
 	@PreAuthorize("hasRole('SALES')")
-	public List<OrderSummaryDTO> getOrderSummaries(JwtAuthenticationToken auth){
+	public ResponseEntity<PagedModel<OrderSummaryDTO>> getOrderSummaries(
+			@RequestParam(value = "page", defaultValue = "0") int page,
+			@RequestParam(value = "size", defaultValue = "10") int size,
+			@RequestParam(required = false) String query,
+			JwtAuthenticationToken auth){
 		UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
-		return orderService.getOrderSummaries(orgId);
+
+		Pageable pageable = PageRequest.of(page, size);
+		Page<OrderSummaryDTO> orderSummaries = orderService.getOrderSummaries(pageable, orgId, query);
+
+		return ResponseEntity.ok(new PagedModel<>(orderSummaries));
 	}
 	
 	@GetMapping("/{id}")

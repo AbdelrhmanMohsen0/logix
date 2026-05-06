@@ -16,39 +16,59 @@ All endpoints in this service require the user to be authenticated and authorize
 ## 1. Inbound Shipments
 
 ### Get Inbound Shipments
-Retrieves a list of all inbound shipments for the worker's organization.
+Retrieves a paginated list of all inbound shipments for the worker's organization.
 
 * **URL:** `/warehouse/inbound`
 * **Method:** `GET`
 
+#### Query Parameters
+* `page` (optional, integer): The page index to retrieve. Default is `0`.
+* `size` (optional, integer): The number of items per page. Default is `10`.
+
 #### Request Example
 ```http
-GET /warehouse/inbound HTTP/1.1
+GET /warehouse/inbound?page=0&size=10 HTTP/1.1
 Authorization: Bearer eyJhbG...
 ```
 
 #### Success Response (200 OK)
 ```json
-[
-  {
-    "shipmentID": "INB-98765",
-    "supplierName": "Global Tech Suppliers Ltd",
-    "totalNumberOfItems": 1500,
-    "receivingDate": "2026-05-03T10:15:30Z"
-  },
-  {
-    "shipmentID": "INB-98766",
-    "supplierName": "Office Essentials Inc",
-    "totalNumberOfItems": 250,
-    "receivingDate": "2026-05-02T14:20:00Z"
+{
+  "content": [
+    {
+      "shipmentID": "INB-98765",
+      "supplierName": "Global Tech Suppliers Ltd",
+      "totalNumberOfItems": 1500,
+      "receivingDate": "2026-05-03T10:15:30Z"
+    },
+    {
+      "shipmentID": "INB-98766",
+      "supplierName": "Office Essentials Inc",
+      "totalNumberOfItems": 250,
+      "receivingDate": "2026-05-02T14:20:00Z"
+    }
+  ],
+  "page": {
+    "size": 10,
+    "number": 0,
+    "totalElements": 2,
+    "totalPages": 1
   }
-]
+}
 ```
 
 #### Edge Case Responses
 **Scenario: No inbound shipments exist for the organization (200 OK)**
 ```json
-[]
+{
+  "content": [],
+  "page": {
+    "size": 10,
+    "number": 0,
+    "totalElements": 0,
+    "totalPages": 0
+  }
+}
 ```
 
 ---
@@ -56,37 +76,59 @@ Authorization: Bearer eyJhbG...
 ## 2. Orders & Picking
 
 ### Get Picking List
-Retrieves a summary list of orders that are ready to be picked (`PENDING`) or are currently being picked (`IN_PROGRESS`).
+Retrieves a paginated summary list of orders that are ready to be picked (`PENDING`) or are currently being picked (`IN_PROGRESS`).
 
 * **URL:** `/warehouse/orders`
 * **Method:** `GET`
 
+#### Query Parameters
+* `page` (optional, integer): The page index to retrieve. Default is `0`.
+* `size` (optional, integer): The number of items per page. Default is `10`.
+
 #### Request Example
 ```http
-GET /warehouse/orders HTTP/1.1
+GET /warehouse/orders?page=0&size=10 HTTP/1.1
 Authorization: Bearer eyJhbG...
 ```
 
 #### Success Response (200 OK)
 ```json
-[
-  {
-    "orderId": "550e8400-e29b-41d4-a716-446655440000",
-    "numberOfItems": 12,
-    "orderWarehouseStatus": "PENDING"
-  },
-  {
-    "orderId": "660e8400-e29b-41d4-a716-446655440001",
-    "numberOfItems": 3,
-    "orderWarehouseStatus": "IN_PROGRESS"
+{
+  "content": [
+    {
+      "orderId": "550e8400-e29b-41d4-a716-446655440000",
+      "orderDisplayIndex": "ORD-10001",
+      "numberOfItems": 12,
+      "orderWarehouseStatus": "PENDING"
+    },
+    {
+      "orderId": "660e8400-e29b-41d4-a716-446655440001",
+      "orderDisplayIndex": "ORD-10002",
+      "numberOfItems": 3,
+      "orderWarehouseStatus": "IN_PROGRESS"
+    }
+  ],
+  "page": {
+    "size": 10,
+    "number": 0,
+    "totalElements": 2,
+    "totalPages": 1
   }
-]
+}
 ```
 
 #### Edge Case Responses
 **Scenario: No orders available for picking (200 OK)**
 ```json
-[]
+{
+  "content": [],
+  "page": {
+    "size": 10,
+    "number": 0,
+    "totalElements": 0,
+    "totalPages": 0
+  }
+}
 ```
 
 ---
@@ -108,9 +150,10 @@ Authorization: Bearer eyJhbG...
 ```json
 {
   "orderId": "550e8400-e29b-41d4-a716-446655440000",
+  "orderDisplayIndex": "ORD-10001",
   "orderStatus": "IN_PROGRESS",
   "numberOfItems": 2,
-  "labelURI": "https://example.com",
+  "labelURI": "[https://example.com](https://example.com)",
   "items": [
     {
       "sku": "SKU-LAPTOP-01",
@@ -207,37 +250,59 @@ Authorization: Bearer eyJhbG...
 ## 3. Shipments (Outbound)
 
 ### Get Ready Shipments
-Retrieves a list of all orders that have been packed and are ready to be shipped out.
+Retrieves a paginated list of all orders that have been packed and are ready to be shipped out.
 
 * **URL:** `/warehouse/shipments`
 * **Method:** `GET`
 
+#### Query Parameters
+* `page` (optional, integer): The page index to retrieve. Default is `0`.
+* `size` (optional, integer): The number of items per page. Default is `10`.
+
 #### Request Example
 ```http
-GET /warehouse/shipments HTTP/1.1
+GET /warehouse/shipments?page=0&size=10 HTTP/1.1
 Authorization: Bearer eyJhbG...
 ```
 
 #### Success Response (200 OK)
 ```json
-[
-  {
-    "orderId": "770e8400-e29b-41d4-a716-446655440002",
-    "customerName": "Jane Doe",
-    "customerAddress": "123 Maple Street, Springfield, IL 62704"
-  },
-  {
-    "orderId": "880e8400-e29b-41d4-a716-446655440003",
-    "customerName": "Acme Corp",
-    "customerAddress": "987 Industrial Blvd, Metropolis, NY 10001"
+{
+  "content": [
+    {
+      "orderId": "770e8400-e29b-41d4-a716-446655440002",
+      "orderDisplayIndex": "ORD-10003",
+      "customerName": "Jane Doe",
+      "customerAddress": "123 Maple Street, Springfield, IL 62704"
+    },
+    {
+      "orderId": "880e8400-e29b-41d4-a716-446655440003",
+      "orderDisplayIndex": "ORD-10004",
+      "customerName": "Acme Corp",
+      "customerAddress": "987 Industrial Blvd, Metropolis, NY 10001"
+    }
+  ],
+  "page": {
+    "size": 10,
+    "number": 0,
+    "totalElements": 2,
+    "totalPages": 1
   }
-]
+}
 ```
 
 #### Edge Case Responses
 **Scenario: No packed orders waiting for shipment (200 OK)**
 ```json
-[]
+{
+  "content": [],
+  "page": {
+    "size": 10,
+    "number": 0,
+    "totalElements": 0,
+    "totalPages": 0
+  }
+}
 ```
 
 ---

@@ -4,12 +4,15 @@ import com.core.warehouseservice.dto.OrderDTO;
 import com.core.warehouseservice.dto.OrderSummaryDTO;
 import com.core.warehouseservice.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -21,9 +24,16 @@ public class OrdersController {
 
     @GetMapping
     @PreAuthorize("hasRole('WORKER')")
-    public ResponseEntity<List<OrderSummaryDTO>> getPickingList(JwtAuthenticationToken auth) {
+    public ResponseEntity<PagedModel<OrderSummaryDTO>> getPickingList(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            JwtAuthenticationToken auth) {
         UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
-        return ResponseEntity.ok(orderService.getPickingList(orgId));
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<OrderSummaryDTO> orders = orderService.getPickingList(pageable, orgId);
+
+        return ResponseEntity.ok(new PagedModel<>(orders));
     }
 
     @GetMapping("/{orderId}")

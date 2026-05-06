@@ -3,6 +3,8 @@ package com.core.warehouseservice.repository;
 import com.core.warehouseservice.domain.Order;
 import com.core.warehouseservice.domain.OrderWarehouseStatus;
 import com.core.warehouseservice.dto.OrderSummaryDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -25,7 +27,8 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
         WHERE o.organizationId = :organizationId
         AND o.orderStatus IN :statuses
     """)
-    List<OrderSummaryDTO> findAllSummariesByOrganizationIdAndStatuses(
+    Page<OrderSummaryDTO> findAllSummariesByOrganizationIdAndStatuses(
+            Pageable pageable,
             @Param("organizationId") UUID organizationId,
             @Param("statuses") List<OrderWarehouseStatus> statuses
     );
@@ -54,6 +57,6 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     );
 
     Optional<Order> findOrderByIdAndOrganizationId(UUID id, UUID organizationId);
-    List<Order> findAllByOrganizationIdAndOrderStatusIn(UUID organizationId, List<OrderWarehouseStatus> orderStatus);
+    Page<Order> findAllByOrganizationIdAndOrderStatusIn(Pageable pageable, UUID organizationId, List<OrderWarehouseStatus> orderStatus);
 
 }

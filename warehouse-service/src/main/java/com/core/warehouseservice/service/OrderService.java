@@ -10,6 +10,8 @@ import com.core.warehouseservice.mapper.OrderMapper;
 import com.core.warehouseservice.repository.OrderRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -34,8 +36,9 @@ public class OrderService {
     }
 
     @Transactional
-    public List<OrderSummaryDTO> getPickingList(UUID orgId){
+    public Page<OrderSummaryDTO> getPickingList(Pageable pageable, UUID orgId){
         return orderRepository.findAllSummariesByOrganizationIdAndStatuses(
+                pageable,
                 orgId,
                 List.of(OrderWarehouseStatus.PENDING, OrderWarehouseStatus.IN_PROGRESS)
         );
@@ -72,9 +75,9 @@ public class OrderService {
         orderRepository.save(order);
     }
 
-    public List<ShipmentDTO> getAllOrdersReadyForShipping(UUID orgId){
-        List<Order> orders = orderRepository.findAllByOrganizationIdAndOrderStatusIn(orgId, List.of(OrderWarehouseStatus.PACKED));
-        return orders.stream().map(orderMapper::toShipmentDTO).toList();
+    public Page<ShipmentDTO> getAllOrdersReadyForShipping(Pageable pageable, UUID orgId){
+        Page<Order> orders = orderRepository.findAllByOrganizationIdAndOrderStatusIn(pageable, orgId, List.of(OrderWarehouseStatus.PACKED));
+        return orders.map(orderMapper::toShipmentDTO);
     }
 
     @Transactional

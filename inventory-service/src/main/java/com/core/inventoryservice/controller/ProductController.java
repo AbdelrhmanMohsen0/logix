@@ -45,13 +45,14 @@ public class ProductController {
 	public ResponseEntity<PagedModel<ProductDTO>> findAllProducts(
 			@RequestParam(value = "page", defaultValue = "0") int page,
 			@RequestParam(value = "size", defaultValue = "10") int size,
+			@RequestParam(required = false) String query,
 			@RequestParam(defaultValue = "ALL") ProductStatus stock,
 			JwtAuthenticationToken auth
 	) {
 		UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
 		
 		Pageable pageable = PageRequest.of(page, size);
-		Page<ProductDTO> productDTOs = inventoryService.findAllProducts(pageable, orgId, stock);
+		Page<ProductDTO> productDTOs = inventoryService.findAllProducts(pageable, orgId, query, stock);
 		
 		return ResponseEntity.ok(new PagedModel<>(productDTOs));
 	}
