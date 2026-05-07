@@ -1,5 +1,5 @@
 import React from 'react';
-import { OrderAPI } from '../../services/api';
+import { WarehouseAPI } from '../../services/api';
 
 function CreateShipmentPage({ onNavigate }) {
   
@@ -13,11 +13,7 @@ function CreateShipmentPage({ onNavigate }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const order = await OrderAPI.getOrder(form.orderId);
-      if (order.orderStatus !== "PACKED") {
-        throw new Error(`Order must be marked as PACKED before shipping. Current status is ${order.orderStatus}.`);
-      }
-      await OrderAPI.updateOrderStatus(form.orderId, "SHIPPED");
+      await WarehouseAPI.shipOrder(form.orderId);
       alert("Shipment Created! Status updated to SHIPPED.");
       onNavigate("shipments");
     } catch (err) {

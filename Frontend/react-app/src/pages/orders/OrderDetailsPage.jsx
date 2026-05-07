@@ -5,13 +5,19 @@ function OrderDetailsPage({ orderId, onNavigate }) {
   const [order, setOrder] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
-  const [statusLoading, setStatusLoading] = React.useState(false);
+
   const fetchOrder = React.useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const data = await OrderAPI.getOrder(orderId);
-      setOrder(data);
+      const mapped = {
+        ...data,
+        id: data.orderId || data.id,
+        orderStatus: data.orderCurrentStatus || data.orderStatus,
+        items: data.items?.map(i => ({ ...i, SKU: i.sku || i.SKU })) || []
+      };
+      setOrder(mapped);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -38,23 +44,13 @@ function OrderDetailsPage({ orderId, onNavigate }) {
   };
   const statusClass = (s) => (s || "").toLowerCase();
   const allStatuses = [
-    "PENDING",
-    "IN_PROGRESS",
+    "CREATED",
+    "CONFIRMED",
+    "PROCESSING",
     "PACKED",
     "SHIPPED",
     "DELIVERED",
   ];
-  const handleStatusChange = async (newStatus) => {
-    setStatusLoading(true);
-    try {
-      const updated = await OrderAPI.updateOrderStatus(orderId, newStatus);
-      setOrder(updated);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setStatusLoading(false);
-    }
-  };
   if (loading) {
     return (
       <div className="loading-center">
@@ -123,22 +119,6 @@ function OrderDetailsPage({ orderId, onNavigate }) {
             Back to Orders
           </button>
         </div>
-      </div>
-      <div
-        className="alert alert-info"
-        style={{
-          marginBottom: "1.5rem",
-        }}>
-        <span
-          className="material-symbols-outlined"
-          style={{
-            fontSize: "1rem",
-          }}>
-          info
-        </span>
-        Order details are simulated. Backend GET /order/
-        {orderId}
-        {" endpoint is not yet implemented."}
       </div>
       <div className="responsive-grid">
         <div>

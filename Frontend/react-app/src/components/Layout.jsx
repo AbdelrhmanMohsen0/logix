@@ -62,12 +62,6 @@ function Layout({ currentRoute, onNavigate, searchQuery, setSearchQuery, childre
             </div>
           </div>
           <div className="top-header-right">
-            <button className="notification-btn" aria-label="Notifications">
-              <span className="material-symbols-outlined">
-                notifications
-              </span>
-              <span className="notification-dot" />
-            </button>
           </div>
         </header>
         <main className="page-content">

@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { InventoryProvider } from './context/InventoryContext';
 import Layout from './components/Layout';
 import AccessDenied from './components/AccessDenied';
 import LoginPage from './pages/auth/LoginPage';
@@ -41,9 +40,7 @@ function App() {
   }, []);
   return (
     <AuthProvider>
-      <InventoryProvider>
-        <AppRouter route={route} navigate={navigate} />
-      </InventoryProvider>
+      <AppRouter route={route} navigate={navigate} />
     </AuthProvider>
   );
 }

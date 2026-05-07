@@ -1,44 +1,57 @@
 import React from 'react';
-import { OrderAPI } from '../../services/api';
+import { WarehouseAPI } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 function PickingListPage({ searchQuery, onNavigate }) {
   const [orders, setOrders] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
+  
+  const [page, setPage] = React.useState(0);
+  const pageSize = 10;
 
   React.useEffect(() => {
-    OrderAPI.getOrders().then((data) => {
-      setOrders(data);
-      setLoading(false);
-    });
+    WarehouseAPI.getPickingList()
+      .then((data) => {
+        setOrders(data || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
   }, []);
 
   const filteredOrders = orders.filter(o => {
-    if (o.orderStatus !== "PENDING" && o.orderStatus !== "IN_PROGRESS") return false;
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
-    return (
-      (o.id && o.id.toLowerCase().includes(q)) ||
-      (o.customerName && o.customerName.toLowerCase().includes(q)) ||
-      (o.supplierName && o.supplierName.toLowerCase().includes(q))
-    );
+    return o.orderId && o.orderId.toLowerCase().includes(q);
   });
+  
+  const paginatedOrders = filteredOrders.slice(page * pageSize, (page + 1) * pageSize);
 
-  const formatCurrency = (n) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n || 0);
-
-  const formatDate = (d) => {
-    if (!d) return "—";
-    return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-  };
   const statusClass = (s) => (s || "").toLowerCase();
 
   const handleStartWork = async (id) => {
     try {
-      await OrderAPI.updateOrderStatus(id, "IN_PROGRESS");
-      const updated = await OrderAPI.getOrders();
+      await WarehouseAPI.startPicking(id);
+      const updated = await WarehouseAPI.getPickingList();
       setOrders(updated);
     } catch (e) {
-      console.error(e);
+      if (e.response?.status === 423) {
+        alert("This order is currently locked and being processed by another worker.");
+      } else {
+        alert("Failed to start picking: " + e.message);
+      }
+    }
+  };
+
+  const handlePackOrder = async (id) => {
+    try {
+      await WarehouseAPI.packOrder(id);
+      const updated = await WarehouseAPI.getPickingList();
+      setOrders(updated);
+    } catch (e) {
+      alert("Failed to pack order: " + e.message);
     }
   };
 
@@ -53,16 +66,6 @@ function PickingListPage({ searchQuery, onNavigate }) {
             Manage and track order fulfillment picking operations.
           </p>
         </div>
-        <div className="page-actions">
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={() => onNavigate("picking-management")}>
-            <span className="material-symbols-outlined" style={{ fontSize: "1rem" }}>
-              settings
-            </span>
-            Management Dashboard
-          </button>
-        </div>
       </div>
       <div className="card" style={{ padding: "0.5rem 0" }}>
         <div className="table-wrapper">
@@ -70,12 +73,7 @@ function PickingListPage({ searchQuery, onNavigate }) {
             <thead>
               <tr>
                 <th>Order ID</th>
-                <th>Customer Name</th>
-                <th>Supplier Name</th>
-                <th>Items</th>
-                <th>Quantity</th>
-                <th>Price</th>
-                <th>Date</th>
+                <th>Total Items</th>
                 <th>Status</th>
                 <th style={{ textAlign: "right" }}>Actions</th>
               </tr>
@@ -90,37 +88,43 @@ function PickingListPage({ searchQuery, onNavigate }) {
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map((o) => (
-                  <tr key={o.id}>
+                paginatedOrders.map((o) => (
+                  <tr key={o.orderId}>
                     <td className="font-medium" style={{ fontFamily: "monospace", fontSize: "0.8125rem" }}>
-                      {o.id}
+                      {o.orderId}
                     </td>
-                    <td className="font-medium">{o.customerName}</td>
-                    <td>{o.supplierName}</td>
-                    <td>{o.items ? o.items.map(i => i.name).join(", ") : "—"}</td>
-                    <td>{o.items ? o.items.reduce((sum, i) => sum + i.quantity, 0) : 0}</td>
-                    <td className="font-medium">{formatCurrency(o.totalAmount)}</td>
-                    <td>{formatDate(o.createdAt)}</td>
+                    <td>{o.numberOfItems}</td>
                     <td>
-                      <span className={`status-badge ${statusClass(o.orderStatus)}`}>
-                        {o.orderStatus}
+                      <span className={`status-badge ${statusClass(o.orderWarehouseStatus)}`}>
+                        {o.orderWarehouseStatus}
                       </span>
                     </td>
                     <td style={{ textAlign: "right" }}>
-                      {o.orderStatus === "PENDING" && (
+                      {o.orderWarehouseStatus === "PENDING" && (
                         <button
                           className="btn-ghost"
-                          onClick={() => handleStartWork(o.id)}
+                          onClick={() => handleStartWork(o.orderId)}
                           title="Start Work">
                           <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
                             play_arrow
                           </span>
                         </button>
                       )}
+                      {o.orderWarehouseStatus === "IN_PROGRESS" && (
+                        <button
+                          className="btn-ghost"
+                          onClick={() => handlePackOrder(o.orderId)}
+                          title="Mark as Packed"
+                          style={{ color: "var(--primary)" }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
+                            inventory
+                          </span>
+                        </button>
+                      )}
                       <button
                         className="btn-ghost"
-                        onClick={() => onNavigate("picking-details:" + o.id)}
-                        title={o.orderStatus === "IN_PROGRESS" ? "Continue Picking" : "View Details"}>
+                        onClick={() => onNavigate("picking-details:" + o.orderId)}
+                        title={o.orderWarehouseStatus === "IN_PROGRESS" ? "Continue Picking" : "View Details"}>
                         <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
                           checklist
                         </span>
@@ -132,6 +136,13 @@ function PickingListPage({ searchQuery, onNavigate }) {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={page}
+          totalPages={Math.ceil(filteredOrders.length / pageSize)}
+          totalElements={filteredOrders.length}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       </div>
     </div>
   );

@@ -1,35 +1,41 @@
 import React from 'react';
-import { OrderAPI } from '../../services/api';
+import { WarehouseAPI } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 function InboundShipmentsPage({ searchQuery, onNavigate }) {
   const [orders, setOrders] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
+  
+  const [page, setPage] = React.useState(0);
+  const pageSize = 10;
 
   React.useEffect(() => {
-    OrderAPI.getOrders().then((data) => {
-      setOrders(data);
-      setLoading(false);
-    });
+    WarehouseAPI.getInbound()
+      .then((data) => {
+        setOrders(data || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
   }, []);
 
   const filteredOrders = orders.filter(o => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return (
-      (o.id && o.id.toLowerCase().includes(q)) ||
-      (o.supplierName && o.supplierName.toLowerCase().includes(q)) ||
-      (o.customerName && o.customerName.toLowerCase().includes(q))
+      (o.shipmentID && o.shipmentID.toLowerCase().includes(q)) ||
+      (o.supplierName && o.supplierName.toLowerCase().includes(q))
     );
   });
-
-  const formatCurrency = (n) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n || 0);
+  
+  const paginatedOrders = filteredOrders.slice(page * pageSize, (page + 1) * pageSize);
 
   const formatDate = (d) => {
     if (!d) return "—";
-    return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute:"2-digit" });
   };
-  const statusClass = (s) => (s || "").toLowerCase();
 
   return (
     <div>
@@ -61,14 +67,10 @@ function InboundShipmentsPage({ searchQuery, onNavigate }) {
           <table>
             <thead>
               <tr>
-                <th>Order ID</th>
-                <th>Customer Name</th>
+                <th>Shipment ID</th>
                 <th>Supplier Name</th>
-                <th>Items</th>
-                <th>Quantity</th>
-                <th>Price</th>
-                <th>Date</th>
-                <th>Status</th>
+                <th>Total Items</th>
+                <th>Receiving Date</th>
               </tr>
             </thead>
             <tbody>
@@ -81,28 +83,27 @@ function InboundShipmentsPage({ searchQuery, onNavigate }) {
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map((o) => (
-                  <tr key={o.id}>
+                paginatedOrders.map((o) => (
+                  <tr key={o.shipmentID}>
                     <td className="font-medium" style={{ fontFamily: "monospace", fontSize: "0.8125rem" }}>
-                      {o.id}
+                      {o.shipmentID}
                     </td>
-                    <td className="font-medium">{o.customerName}</td>
-                    <td>{o.supplierName}</td>
-                    <td>{o.items ? o.items.map(i => i.name).join(", ") : "—"}</td>
-                    <td>{o.items ? o.items.reduce((sum, i) => sum + i.quantity, 0) : 0}</td>
-                    <td className="font-medium">{formatCurrency(o.totalAmount)}</td>
-                    <td>{formatDate(o.createdAt)}</td>
-                    <td>
-                      <span className={`status-badge ${statusClass(o.orderStatus)}`}>
-                        {o.orderStatus}
-                      </span>
-                    </td>
+                    <td className="font-medium">{o.supplierName}</td>
+                    <td>{o.totalNumberOfItems}</td>
+                    <td>{formatDate(o.receivingDate)}</td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={page}
+          totalPages={Math.ceil(filteredOrders.length / pageSize)}
+          totalElements={filteredOrders.length}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       </div>
     </div>
   );

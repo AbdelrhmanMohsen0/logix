@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { validatePassword, PasswordRequirements } from '../../utils/passwordValidation';
 
 function EditUserPage({ userId, onNavigate }) {
+  const { user: currentUser } = useAuth();
   const [form, setForm] = React.useState({
     name: "",
     email: "",
@@ -88,6 +89,8 @@ function EditUserPage({ userId, onNavigate }) {
     "WORKER",
   ];
   const isOwner = original?.role === "OWNER" || original?.role === "ROLE_OWNER";
+  const isSelf = original?.id === currentUser?.id;
+  const isRoleSelectDisabled = isOwner || isSelf;
   const selectableRoles = isOwner ? ["OWNER", ...roles] : roles;
   if (loading) {
     return (
@@ -177,8 +180,8 @@ function EditUserPage({ userId, onNavigate }) {
               name="role"
               value={form.role}
               onChange={handleChange}
-              disabled={isOwner}
-              style={isOwner ? { opacity: 0.6, cursor: "not-allowed" } : {}}>
+              disabled={isRoleSelectDisabled}
+              style={isRoleSelectDisabled ? { opacity: 0.6, cursor: "not-allowed" } : {}}>
               {selectableRoles.map((r) =>
                 <option key={r} value={r.startsWith("ROLE_") ? r : "ROLE_" + r}>
                   {r.replace("ROLE_", "")}
@@ -193,6 +196,15 @@ function EditUserPage({ userId, onNavigate }) {
                   marginTop: "0.25rem",
                 }}>
                 Owner role cannot be changed.
+              </p>}
+            {isSelf && !isOwner &&
+              <p
+                style={{
+                  fontSize: "0.75rem",
+                  color: "var(--outline)",
+                  marginTop: "0.25rem",
+                }}>
+                You cannot change your own role.
               </p>}
           </div>
           <div
