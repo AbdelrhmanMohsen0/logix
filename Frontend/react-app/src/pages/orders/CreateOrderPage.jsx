@@ -554,14 +554,7 @@ function CreateOrderPage({ onNavigate }) {
                 justifyContent: "space-between",
                 alignItems: "center",
               }}>
-              <div
-                style={{
-                  fontSize: "0.75rem",
-                  fontStyle: "italic",
-                  color: "var(--on-surface-variant)",
-                }}>
-                Tip: Use arrow keys to navigate
-              </div>
+              <div></div>
               <button
                 style={{
                   fontSize: "0.75rem",

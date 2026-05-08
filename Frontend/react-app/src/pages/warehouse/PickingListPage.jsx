@@ -33,25 +33,15 @@ function PickingListPage({ searchQuery, onNavigate }) {
 
   const handleStartWork = async (id) => {
     try {
-      await WarehouseAPI.startPicking(id);
-      const updated = await WarehouseAPI.getPickingList();
-      setOrders(updated);
+      const orderData = await WarehouseAPI.startPicking(id);
+      sessionStorage.setItem("active_picking_" + id, JSON.stringify(orderData));
+      onNavigate("picking-details:" + id);
     } catch (e) {
       if (e.response?.status === 423) {
         alert("This order is currently locked and being processed by another worker.");
       } else {
         alert("Failed to start picking: " + e.message);
       }
-    }
-  };
-
-  const handlePackOrder = async (id) => {
-    try {
-      await WarehouseAPI.packOrder(id);
-      const updated = await WarehouseAPI.getPickingList();
-      setOrders(updated);
-    } catch (e) {
-      alert("Failed to pack order: " + e.message);
     }
   };
 
@@ -113,22 +103,13 @@ function PickingListPage({ searchQuery, onNavigate }) {
                       {o.orderWarehouseStatus === "IN_PROGRESS" && (
                         <button
                           className="btn-ghost"
-                          onClick={() => handlePackOrder(o.orderId)}
-                          title="Mark as Packed"
-                          style={{ color: "var(--primary)" }}>
+                          onClick={() => onNavigate("picking-details:" + o.orderId)}
+                          title="Continue Picking">
                           <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
-                            inventory
+                            checklist
                           </span>
                         </button>
                       )}
-                      <button
-                        className="btn-ghost"
-                        onClick={() => onNavigate("picking-details:" + o.orderId)}
-                        title={o.orderWarehouseStatus === "IN_PROGRESS" ? "Continue Picking" : "View Details"}>
-                        <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
-                          checklist
-                        </span>
-                      </button>
                     </td>
                   </tr>
                 ))

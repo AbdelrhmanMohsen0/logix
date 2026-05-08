@@ -5,9 +5,9 @@ import Pagination from '../../components/Pagination';
 function InboundShipmentsPage({ searchQuery, onNavigate }) {
   const [orders, setOrders] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
-  
+
   const [page, setPage] = React.useState(0);
-  const pageSize = 10;
+  const pageSize = 5;
 
   React.useEffect(() => {
     WarehouseAPI.getInbound()
@@ -29,12 +29,12 @@ function InboundShipmentsPage({ searchQuery, onNavigate }) {
       (o.supplierName && o.supplierName.toLowerCase().includes(q))
     );
   });
-  
+
   const paginatedOrders = filteredOrders.slice(page * pageSize, (page + 1) * pageSize);
 
   const formatDate = (d) => {
     if (!d) return "—";
-    return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute:"2-digit" });
+    return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
   };
 
   return (
@@ -62,12 +62,12 @@ function InboundShipmentsPage({ searchQuery, onNavigate }) {
           </button>
         </div>
       </div>
-      <div className="card" style={{ padding: "0" }}>
+      <div className="card" style={{ padding: "0.5rem 0" }}>
         <div className="table-wrapper">
           <table>
             <thead>
               <tr>
-                <th>Shipment ID</th>
+                <th>Shipment Title</th>
                 <th>Supplier Name</th>
                 <th>Total Items</th>
                 <th>Receiving Date</th>

@@ -32,7 +32,7 @@ function InventoryManagementPage({ searchQuery, routeParam, onNavigate }) {
         setPageInfo({ totalElements: data?.length || 0, totalPages: 1, size: 10 });
       } else {
         const filter = routeParam === "lowstock" ? "LOW_STOCK" : stockFilter;
-        const data = await InventoryAPI.getProducts(page, 10, filter);
+        const data = await InventoryAPI.getProducts(page, 5, filter);
         setItems(data?.content || []);
         setPageInfo(data?.page || { totalElements: 0, totalPages: 0, size: 10 });
       }
@@ -126,9 +126,9 @@ function InventoryManagementPage({ searchQuery, routeParam, onNavigate }) {
 
   const filteredItems = localFilter
     ? items.filter(i =>
-        (i.name && i.name.toLowerCase().includes(localFilter.toLowerCase())) ||
-        (i.sku && i.sku.toLowerCase().includes(localFilter.toLowerCase()))
-      )
+      (i.name && i.name.toLowerCase().includes(localFilter.toLowerCase())) ||
+      (i.sku && i.sku.toLowerCase().includes(localFilter.toLowerCase()))
+    )
     : items;
 
   const getStatusBadge = (item) => {
@@ -187,7 +187,7 @@ function InventoryManagementPage({ searchQuery, routeParam, onNavigate }) {
           <div className="spinner spinner-lg" />
         </div>
       ) : (
-        <div className="card" style={{ padding: 0 }}>
+        <div className="card" style={{ padding: "0.5rem 0" }}>
           <div className="table-wrapper">
             <table>
               <thead>

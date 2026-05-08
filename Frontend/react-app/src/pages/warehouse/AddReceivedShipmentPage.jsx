@@ -1,5 +1,6 @@
 import React from 'react';
 import { WarehouseAPI, InventoryAPI } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 function AddReceivedShipmentPage({ onNavigate }) {
   const [form, setForm] = React.useState({ shipmentId: "", supplier: "" });
@@ -14,6 +15,8 @@ function AddReceivedShipmentPage({ onNavigate }) {
   const [modalError, setModalError] = React.useState("");
   const [successMsg, setSuccessMsg] = React.useState("");
   const [loading, setLoading] = React.useState(false);
+  const [page, setPage] = React.useState(0);
+  const pageSize = 5;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,7 +29,7 @@ function AddReceivedShipmentPage({ onNavigate }) {
       setFormError("Please add at least one item to the shipment.");
       return;
     }
-    
+
     setLoading(true);
     try {
       const payload = {
@@ -159,7 +162,7 @@ function AddReceivedShipmentPage({ onNavigate }) {
             Add Product
           </button>
         </div>
-        <div className="card" style={{ padding: "0", marginBottom: "2rem" }}>
+        <div className="card" style={{ padding: "0.5rem 0", marginBottom: "2rem" }}>
           <div className="table-wrapper">
             <table>
               <thead>
@@ -183,7 +186,7 @@ function AddReceivedShipmentPage({ onNavigate }) {
                     </td>
                   </tr>
                 ) : (
-                  items.map((it, idx) =>
+                  items.slice(page * pageSize, (page + 1) * pageSize).map((it, idx) =>
                     <tr key={idx}>
                       <td>
                         <div
@@ -219,6 +222,13 @@ function AddReceivedShipmentPage({ onNavigate }) {
               </tbody>
             </table>
           </div>
+          <Pagination
+            currentPage={page}
+            totalPages={Math.ceil(items.length / pageSize)}
+            totalElements={items.length}
+            pageSize={pageSize}
+            onPageChange={setPage}
+          />
         </div>
         <div
           style={{

@@ -6,9 +6,9 @@ function OrderListPage({ searchQuery, onNavigate }) {
   const [orders, setOrders] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
-  
+
   const [page, setPage] = React.useState(0);
-  const pageSize = 10;
+  const pageSize = 5;
 
   React.useEffect(() => {
     let cancelled = false;
@@ -51,7 +51,7 @@ function OrderListPage({ searchQuery, onNavigate }) {
       (o.customerName && o.customerName.toLowerCase().includes(q))
     );
   });
-  
+
   const paginatedOrders = filteredOrders.slice(page * pageSize, (page + 1) * pageSize);
 
   return (
@@ -95,126 +95,126 @@ function OrderListPage({ searchQuery, onNavigate }) {
         </div>}
       {loading
         ? <div className="loading-center">
-        <div className="spinner spinner-lg" />
-      </div>
+          <div className="spinner spinner-lg" />
+        </div>
         : orders.length === 0
           ? <div className="empty-state">
-        <span className="material-symbols-outlined">
-          receipt_long
-        </span>
-        <h3>
-          No orders yet
-        </h3>
-        <p>
-          Create your first order to get started.
-        </p>
-        <button
-          className="btn btn-primary"
-          style={{
-            marginTop: "1rem",
-          }}
-          onClick={() => onNavigate("create-order")}>
-          Create Order
-        </button>
-      </div>
+            <span className="material-symbols-outlined">
+              receipt_long
+            </span>
+            <h3>
+              No orders yet
+            </h3>
+            <p>
+              Create your first order to get started.
+            </p>
+            <button
+              className="btn btn-primary"
+              style={{
+                marginTop: "1rem",
+              }}
+              onClick={() => onNavigate("create-order")}>
+              Create Order
+            </button>
+          </div>
           : <div
-        className="card"
-        style={{
-          padding: "0.5rem 0",
-        }}>
-        <div className="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>
-                  Order ID
-                </th>
-                <th>
-                  Customer Name
-                </th>
-                <th>
-                  Total Amount
-                </th>
-                <th>
-                  Date
-                </th>
-                <th>
-                  Status
-                </th>
-                <th
-                  style={{
-                    textAlign: "right",
-                  }}>
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOrders.length === 0 && orders.length > 0 ? (
-                <tr>
-                  <td colSpan="7" style={{ textAlign: "center", padding: "2rem" }}>
-                    No orders found for "{searchQuery}"
-                  </td>
-                </tr>
-              ) : (
-                paginatedOrders.map((o) =>
-                  <tr key={o.id}>
-                    <td
-                      className="font-medium"
-                      style={{
-                        fontFamily: "monospace",
-                        fontSize: "0.8125rem",
-                      }}>
-                      {o.id}
-                    </td>
-                    <td className="font-medium">
-                      {o.customerName}
-                    </td>
-                    <td className="font-medium">
-                      {formatCurrency(o.totalAmount)}
-                    </td>
-                    <td>
-                      {formatDate(o.orderDate)}
-                    </td>
-                    <td>
-                      <span className={`status-badge ${statusClass(o.currentStatus)}`}>
-                        {o.currentStatus}
-                      </span>
-                    </td>
-                    <td
+            className="card"
+            style={{
+              padding: "0.5rem 0",
+            }}>
+            <div className="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>
+                      Order ID
+                    </th>
+                    <th>
+                      Customer Name
+                    </th>
+                    <th>
+                      Total Amount
+                    </th>
+                    <th>
+                      Date
+                    </th>
+                    <th>
+                      Status
+                    </th>
+                    <th
                       style={{
                         textAlign: "right",
                       }}>
-                      <button
-                        className="btn-ghost"
-                        style={{
-                          padding: "0.25rem",
-                        }}
-                        onClick={() => onNavigate("order-details:" + o.id)}
-                        title="View details">
-                        <span
-                          className="material-symbols-outlined"
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOrders.length === 0 && orders.length > 0 ? (
+                    <tr>
+                      <td colSpan="7" style={{ textAlign: "center", padding: "2rem" }}>
+                        No orders found for "{searchQuery}"
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedOrders.map((o) =>
+                      <tr key={o.id}>
+                        <td
+                          className="font-medium"
                           style={{
-                            fontSize: "1.125rem",
+                            fontFamily: "monospace",
+                            fontSize: "0.8125rem",
                           }}>
-                          visibility
-                        </span>
-                      </button>
-                    </td>
-                  </tr>,
-                )
-              )}
-            </tbody>
-          </table>
-        </div>
-        <Pagination
-          currentPage={page}
-          totalPages={Math.ceil(filteredOrders.length / pageSize)}
-          totalElements={filteredOrders.length}
-          pageSize={pageSize}
-          onPageChange={setPage}
-        />
-      </div>}
+                          {o.id}
+                        </td>
+                        <td className="font-medium">
+                          {o.customerName}
+                        </td>
+                        <td className="font-medium">
+                          {formatCurrency(o.totalAmount)}
+                        </td>
+                        <td>
+                          {formatDate(o.orderDate)}
+                        </td>
+                        <td>
+                          <span className={`status-badge ${statusClass(o.currentStatus)}`}>
+                            {o.currentStatus}
+                          </span>
+                        </td>
+                        <td
+                          style={{
+                            textAlign: "right",
+                          }}>
+                          <button
+                            className="btn-ghost"
+                            style={{
+                              padding: "0.25rem",
+                            }}
+                            onClick={() => onNavigate("order-details:" + o.id)}
+                            title="View details">
+                            <span
+                              className="material-symbols-outlined"
+                              style={{
+                                fontSize: "1.125rem",
+                              }}>
+                              visibility
+                            </span>
+                          </button>
+                        </td>
+                      </tr>,
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <Pagination
+              currentPage={page}
+              totalPages={Math.ceil(filteredOrders.length / pageSize)}
+              totalElements={filteredOrders.length}
+              pageSize={pageSize}
+              onPageChange={setPage}
+            />
+          </div>}
     </div>
   );
 }

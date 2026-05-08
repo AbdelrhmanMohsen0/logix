@@ -16,7 +16,7 @@ import InventoryManagementPage from './pages/inventory/InventoryManagementPage';
 import InboundShipmentsPage from './pages/warehouse/InboundShipmentsPage';
 import AddReceivedShipmentPage from './pages/warehouse/AddReceivedShipmentPage';
 import PickingListPage from './pages/warehouse/PickingListPage';
-import PickingListDetailsPage from './pages/warehouse/PickingListDetailsPage';
+import PickingAssignmentsPage from './pages/warehouse/PickingAssignmentsPage';
 import PickingListManagementPage from './pages/warehouse/PickingListManagementPage';
 import ShipmentsManagementPage from './pages/warehouse/ShipmentsManagementPage';
 import CreateShipmentPage from './pages/warehouse/CreateShipmentPage';
@@ -116,7 +116,7 @@ function AppRouter({ route, navigate }) {
       case "picking-lists":
         return <PickingListPage searchQuery={searchQuery} onNavigate={navigate} />;
       case "picking-details":
-        return <PickingListDetailsPage listId={routeParam} onNavigate={navigate} />;
+        return <PickingAssignmentsPage listId={routeParam} onNavigate={navigate} />;
       case "picking-management":
         return <PickingListManagementPage onNavigate={navigate} />;
       case "shipments":

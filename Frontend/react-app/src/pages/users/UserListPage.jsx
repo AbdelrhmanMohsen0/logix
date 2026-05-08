@@ -11,9 +11,9 @@ function UserListPage({ searchQuery, onNavigate }) {
   const [deleteId, setDeleteId] = React.useState(null); // for confirm dialog
   const [deleteLoading, setDeleteLoading] = React.useState(false);
   const [successMsg, setSuccessMsg] = React.useState("");
-  
+
   const [page, setPage] = React.useState(0);
-  const pageSize = 10;
+  const pageSize = 5;
 
   const fetchUsers = React.useCallback(async () => {
     setLoading(true);
@@ -60,7 +60,7 @@ function UserListPage({ searchQuery, onNavigate }) {
       (u.email && u.email.toLowerCase().includes(q))
     );
   });
-  
+
   const paginatedUsers = filteredUsers.slice(page * pageSize, (page + 1) * pageSize);
 
   return (
@@ -115,127 +115,127 @@ function UserListPage({ searchQuery, onNavigate }) {
 
       {loading
         ? <div className="loading-center">
-        <div className="spinner spinner-lg" />
-      </div>
+          <div className="spinner spinner-lg" />
+        </div>
         : users.length === 0
           ? <div className="empty-state">
-        <span className="material-symbols-outlined">
-          group_off
-        </span>
-        <h3>
-          No users found
-        </h3>
-        <p>
-          Create your first team member to get started.
-        </p>
-        <button
-          className="btn btn-primary"
-          style={{
-            marginTop: "1rem",
-          }}
-          onClick={() => onNavigate("create-user")}>
-          Create User
-        </button>
-      </div>
+            <span className="material-symbols-outlined">
+              group_off
+            </span>
+            <h3>
+              No users found
+            </h3>
+            <p>
+              Create your first team member to get started.
+            </p>
+            <button
+              className="btn btn-primary"
+              style={{
+                marginTop: "1rem",
+              }}
+              onClick={() => onNavigate("create-user")}>
+              Create User
+            </button>
+          </div>
           : <div
-        className="card"
-        style={{
-          padding: "0.5rem 0",
-        }}>
-        <div className="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>
-                  Name
-                </th>
-                <th>
-                  Email
-                </th>
-                <th>
-                  Role
-                </th>
-                <th
-                  style={{
-                    textAlign: "right",
-                  }}>
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.length === 0 && users.length > 0 ? (
-                <tr>
-                  <td colSpan="4" style={{ textAlign: "center", padding: "2rem" }}>
-                    No users found for "{searchQuery}"
-                  </td>
-                </tr>
-              ) : (
-                paginatedUsers.map((u) =>
-                  <tr key={u.id}>
-                    <td className="font-medium">
-                      {u.name}
-                    </td>
-                    <td>
-                      {u.email}
-                    </td>
-                    <td>
-                      <span className="status-badge confirmed">
-                        {roleLabel(u.role)}
-                      </span>
-                    </td>
-                    <td
+            className="card"
+            style={{
+              padding: "0.5rem 0",
+            }}>
+            <div className="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>
+                      Name
+                    </th>
+                    <th>
+                      Email
+                    </th>
+                    <th>
+                      Role
+                    </th>
+                    <th
                       style={{
                         textAlign: "right",
                       }}>
-                      <button
-                        className="btn-ghost"
-                        style={{
-                          padding: "0.25rem",
-                        }}
-                        onClick={() => onNavigate("edit-user:" + u.id)}
-                        title="Edit user">
-                        <span
-                          className="material-symbols-outlined"
-                          style={{
-                            fontSize: "1.125rem",
-                          }}>
-                          edit
-                        </span>
-                      </button>
-                      {u.role !== 'ROLE_OWNER' && u.role !== 'OWNER' && u.id !== user?.id && (
-                        <button
-                          className="btn-ghost"
-                          style={{
-                            padding: "0.25rem",
-                            color: "var(--error)",
-                          }}
-                          onClick={() => setDeleteId(u.id)}
-                          title="Delete user">
-                          <span
-                            className="material-symbols-outlined"
-                            style={{
-                              fontSize: "1.125rem",
-                            }}>
-                            delete
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.length === 0 && users.length > 0 ? (
+                    <tr>
+                      <td colSpan="4" style={{ textAlign: "center", padding: "2rem" }}>
+                        No users found for "{searchQuery}"
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedUsers.map((u) =>
+                      <tr key={u.id}>
+                        <td className="font-medium">
+                          {u.name}
+                        </td>
+                        <td>
+                          {u.email}
+                        </td>
+                        <td>
+                          <span className="status-badge confirmed">
+                            {roleLabel(u.role)}
                           </span>
-                        </button>
-                      )}
-                    </td>
-                  </tr>,
-                )
-              )}
-            </tbody>
-          </table>
-        </div>
-        <Pagination
-          currentPage={page}
-          totalPages={Math.ceil(filteredUsers.length / pageSize)}
-          totalElements={filteredUsers.length}
-          pageSize={pageSize}
-          onPageChange={setPage}
-        />
-      </div>}
+                        </td>
+                        <td
+                          style={{
+                            textAlign: "right",
+                          }}>
+                          <button
+                            className="btn-ghost"
+                            style={{
+                              padding: "0.25rem",
+                            }}
+                            onClick={() => onNavigate("edit-user:" + u.id)}
+                            title="Edit user">
+                            <span
+                              className="material-symbols-outlined"
+                              style={{
+                                fontSize: "1.125rem",
+                              }}>
+                              edit
+                            </span>
+                          </button>
+                          {u.role !== 'ROLE_OWNER' && u.role !== 'OWNER' && u.id !== user?.id && (
+                            <button
+                              className="btn-ghost"
+                              style={{
+                                padding: "0.25rem",
+                                color: "var(--error)",
+                              }}
+                              onClick={() => setDeleteId(u.id)}
+                              title="Delete user">
+                              <span
+                                className="material-symbols-outlined"
+                                style={{
+                                  fontSize: "1.125rem",
+                                }}>
+                                delete
+                              </span>
+                            </button>
+                          )}
+                        </td>
+                      </tr>,
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <Pagination
+              currentPage={page}
+              totalPages={Math.ceil(filteredUsers.length / pageSize)}
+              totalElements={filteredUsers.length}
+              pageSize={pageSize}
+              onPageChange={setPage}
+            />
+          </div>}
       {deleteId &&
         <div
           className="modal-overlay"
