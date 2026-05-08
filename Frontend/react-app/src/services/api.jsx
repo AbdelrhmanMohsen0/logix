@@ -115,8 +115,9 @@ export const OrderAPI = {
   async createOrder(data) {
     return orderClient.post("/orders", data);
   },
-  async getOrders(page = 0, size = 5) {
-    return orderClient.get(`/orders?page=${page}&size=${size}`);
+  async getOrders(page = 0, size = 5, query = "") {
+    const q = query ? `&query=${encodeURIComponent(query)}` : "";
+    return orderClient.get(`/orders?page=${page}&size=${size}${q}`);
   },
   async getOrder(id) {
     return orderClient.get(`/orders/${id}`);
@@ -125,8 +126,9 @@ export const OrderAPI = {
 
 /* ======== INVENTORY SERVICE ======== */
 export const InventoryAPI = {
-  async getProducts(page = 0, size = 50, stock = "ALL") {
-    return inventoryClient.get(`/inventory/products?page=${page}&size=${size}&stock=${stock}`);
+  async getProducts(page = 0, size = 50, stock = "ALL", query = "") {
+    const q = query ? `&query=${encodeURIComponent(query)}` : "";
+    return inventoryClient.get(`/inventory/products?page=${page}&size=${size}&stock=${stock}${q}`);
   },
   async searchProducts(query) {
     return inventoryClient.get(`/inventory/products/search?query=${query}`);

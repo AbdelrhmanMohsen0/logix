@@ -11,13 +11,24 @@ function OrderListPage({ searchQuery, onNavigate }) {
   const [pageInfo, setPageInfo] = React.useState({ totalElements: 0 });
   const pageSize = 5;
 
+  // Debounce: only fire the search 400ms after the user stops typing
+  const [debouncedQuery, setDebouncedQuery] = React.useState(searchQuery);
+  React.useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Reset to page 0 whenever the debounced query changes
+  React.useEffect(() => {
+    setPage(0);
+  }, [debouncedQuery]);
+
   React.useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
       try {
-        // NOTE: Order API backend search is technically optional, but let's pass it if supported or filter later
-        const data = await OrderAPI.getOrders(page, pageSize);
+        const data = await OrderAPI.getOrders(page, pageSize, debouncedQuery);
         if (!cancelled) {
           setOrders(data?.content || []);
           setPageInfo(data?.page || { totalElements: 0 });
@@ -31,7 +42,7 @@ function OrderListPage({ searchQuery, onNavigate }) {
     return () => {
       cancelled = true;
     };
-  }, [page, pageSize]);
+  }, [page, pageSize, debouncedQuery]);
   const statusClass = (s) => (s || "").toLowerCase();
   const formatCurrency = (n) => {
     return new Intl.NumberFormat("en-US", {
@@ -48,16 +59,6 @@ function OrderListPage({ searchQuery, onNavigate }) {
     });
   };
 
-  // Provide a client-side filter fallback, but note that since we only have the current page,
-  // real filtering should occur in the backend API.
-  const filteredOrders = orders.filter(o => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      (o.id && o.id.toLowerCase().includes(q)) ||
-      (o.customerName && o.customerName.toLowerCase().includes(q))
-    );
-  });
 
   return (
     <div>
@@ -155,14 +156,14 @@ function OrderListPage({ searchQuery, onNavigate }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredOrders.length === 0 && orders.length > 0 ? (
+                  {orders.length === 0 ? (
                     <tr>
                       <td colSpan="7" style={{ textAlign: "center", padding: "2rem" }}>
-                        No orders found for "{searchQuery}"
+                        {searchQuery ? `No orders found for "${searchQuery}"` : "No orders yet."}
                       </td>
                     </tr>
                   ) : (
-                    filteredOrders.map((o) =>
+                    orders.map((o) =>
                       <tr key={o.id}>
                         <td
                           className="font-medium"

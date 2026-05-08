@@ -10,6 +10,20 @@ function InventoryManagementPage({ searchQuery, routeParam, onNavigate }) {
   const [stockFilter, setStockFilter] = useState("ALL");
   const [localFilter, setLocalFilter] = useState("");
 
+  // Debounce the global search bar (400ms)
+  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Debounce the local filter input (400ms) before sending to backend
+  const [debouncedLocalFilter, setDebouncedLocalFilter] = useState(localFilter);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedLocalFilter(localFilter), 400);
+    return () => clearTimeout(timer);
+  }, [localFilter]);
+
   // Add Product modal
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({ name: '', sku: '', quantity: '', price: '', location: '', threshold: '20' });
@@ -26,22 +40,18 @@ function InventoryManagementPage({ searchQuery, routeParam, onNavigate }) {
   const fetchItems = useCallback(async () => {
     setLoading(true);
     try {
-      if (searchQuery) {
-        const data = await InventoryAPI.searchProducts(searchQuery);
-        setItems(data || []);
-        setPageInfo({ totalElements: data?.length || 0, totalPages: 1, size: 10 });
-      } else {
-        const filter = routeParam === "lowstock" ? "LOW_STOCK" : stockFilter;
-        const data = await InventoryAPI.getProducts(page, 5, filter);
-        setItems(data?.content || []);
-        setPageInfo(data?.page || { totalElements: 0, totalPages: 0, size: 10 });
-      }
+      const filter = routeParam === "lowstock" ? "LOW_STOCK" : stockFilter;
+      // localFilter (in-page search) takes priority; fall back to global searchQuery
+      const query = debouncedLocalFilter || debouncedQuery || "";
+      const data = await InventoryAPI.getProducts(page, 5, filter, query);
+      setItems(data?.content || []);
+      setPageInfo(data?.page || { totalElements: 0, totalPages: 0, size: 5 });
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, routeParam, stockFilter, page]);
+  }, [debouncedLocalFilter, debouncedQuery, routeParam, stockFilter, page]);
 
   useEffect(() => {
     fetchItems();
@@ -49,7 +59,7 @@ function InventoryManagementPage({ searchQuery, routeParam, onNavigate }) {
 
   useEffect(() => {
     setPage(0);
-  }, [stockFilter, searchQuery]);
+  }, [stockFilter, debouncedLocalFilter, debouncedQuery]);
 
   const handleAddChange = (e) => {
     setAddForm(f => ({ ...f, [e.target.name]: e.target.value }));
@@ -124,13 +134,6 @@ function InventoryManagementPage({ searchQuery, routeParam, onNavigate }) {
     }
   };
 
-  const filteredItems = localFilter
-    ? items.filter(i =>
-      (i.name && i.name.toLowerCase().includes(localFilter.toLowerCase())) ||
-      (i.sku && i.sku.toLowerCase().includes(localFilter.toLowerCase()))
-    )
-    : items;
-
   const getStatusBadge = (item) => {
     const status = item.stockStatus || (item.quantity === 0 ? "OUT_OF_STOCK" : item.quantity < 50 ? "LOW_STOCK" : "IN_STOCK");
     const map = {
@@ -201,14 +204,14 @@ function InventoryManagementPage({ searchQuery, routeParam, onNavigate }) {
                 </tr>
               </thead>
               <tbody>
-                {filteredItems.length === 0 ? (
+                {items.length === 0 ? (
                   <tr>
                     <td colSpan="6" style={{ textAlign: "center", padding: "3rem", color: "var(--on-surface-variant)" }}>
-                      {searchQuery || localFilter ? "No products match your search." : "No products in inventory yet."}
+                      {debouncedLocalFilter || debouncedQuery ? "No products match your search." : "No products in inventory yet."}
                     </td>
                   </tr>
                 ) : (
-                  filteredItems.map((item) => (
+                  items.map((item) => (
                     <tr key={item.sku}>
                       <td>
                         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>

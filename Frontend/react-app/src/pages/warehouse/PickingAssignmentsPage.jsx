@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { WarehouseAPI } from '../../services/api';
+import { WarehouseAPI, parseJwt, TokenService } from '../../services/api';
 
 function PickingAssignmentsPage({ listId, onNavigate }) {
   const [order, setOrder] = useState(null);
@@ -9,29 +9,31 @@ function PickingAssignmentsPage({ listId, onNavigate }) {
   const [packing, setPacking] = useState(false);
 
   useEffect(() => {
-    // Attempt to load from sessionStorage
-    const cached = sessionStorage.getItem("active_picking_" + listId);
-    if (cached) {
-      setOrder(JSON.parse(cached));
-      setLoading(false);
-    } else {
-      // Try to acquire lock directly (fallback)
-      WarehouseAPI.startPicking(listId)
-        .then(data => {
+    WarehouseAPI.startPicking(listId)
+      .then(data => {
+        // Extract the current user's ID from their JWT token
+        const myUserId = parseJwt(TokenService.get())?.sub;
+
+        // If the order is locked and it was locked by a DIFFERENT worker, deny access
+        if (
+          data.lockedByUserId &&
+          myUserId &&
+          data.lockedByUserId !== myUserId
+        ) {
+          setError("Access Denied: This order is currently being processed by another worker.");
+        } else {
           setOrder(data);
-          sessionStorage.setItem("active_picking_" + listId, JSON.stringify(data));
-          setLoading(false);
-        })
-        .catch(err => {
-          console.error(err);
-          if (err.response?.status === 423) {
-            setError("Access Denied: This order is currently locked and being processed by another worker.");
-          } else {
-            setError("Failed to load order: " + err.message);
-          }
-          setLoading(false);
-        });
-    }
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        if (err.message?.includes("locked") || err.response?.status === 423) {
+          setError("Access Denied: This order is currently locked and being processed by another worker.");
+        } else {
+          setError("Failed to load order: " + err.message);
+        }
+        setLoading(false);
+      });
   }, [listId]);
 
   const toggleCheck = (sku) => {
@@ -49,7 +51,6 @@ function PickingAssignmentsPage({ listId, onNavigate }) {
     setPacking(true);
     try {
       await WarehouseAPI.packOrder(listId);
-      sessionStorage.removeItem("active_picking_" + listId);
       onNavigate("picking-lists");
     } catch (err) {
       alert("Failed to mark as packed: " + err.message);
@@ -117,16 +118,16 @@ function PickingAssignmentsPage({ listId, onNavigate }) {
               {items.map(item => {
                 const isChecked = checkedItems.has(item.sku);
                 return (
-                  <div key={item.sku} className="card" style={{ 
-                    padding: "1.5rem", 
-                    display: "flex", 
-                    alignItems: "flex-start", 
+                  <div key={item.sku} className="card" style={{
+                    padding: "1.5rem",
+                    display: "flex",
+                    alignItems: "flex-start",
                     gap: "1.5rem",
                     border: isChecked ? "2px solid var(--primary)" : "2px solid transparent",
                     transition: "all 0.2s"
                   }}>
                     <div style={{ paddingTop: "0.25rem" }}>
-                      <div 
+                      <div
                         onClick={() => toggleCheck(item.sku)}
                         style={{
                           width: "24px", height: "24px", borderRadius: "4px",
@@ -192,8 +193,8 @@ function PickingAssignmentsPage({ listId, onNavigate }) {
         <button className="btn btn-secondary" onClick={() => onNavigate("picking-lists")}>
           Back to List
         </button>
-        <button 
-          className="btn btn-primary" 
+        <button
+          className="btn btn-primary"
           disabled={!allChecked || packing}
           onClick={handlePack}
           style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.75rem 2rem", fontSize: "1rem", opacity: (!allChecked || packing) ? 0.5 : 1 }}>

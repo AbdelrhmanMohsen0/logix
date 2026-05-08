@@ -35,11 +35,10 @@ function PickingListPage({ searchQuery, onNavigate }) {
 
   const handleStartWork = async (id) => {
     try {
-      const orderData = await WarehouseAPI.startPicking(id);
-      sessionStorage.setItem("active_picking_" + id, JSON.stringify(orderData));
+      await WarehouseAPI.startPicking(id);
       onNavigate("picking-details:" + id);
     } catch (e) {
-      if (e.response?.status === 423) {
+      if (e.message?.includes("locked") || e.response?.status === 423) {
         alert("This order is currently locked and being processed by another worker.");
       } else {
         alert("Failed to start picking: " + e.message);
