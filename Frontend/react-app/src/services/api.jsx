@@ -115,8 +115,8 @@ export const OrderAPI = {
   async createOrder(data) {
     return orderClient.post("/orders", data);
   },
-  async getOrders() {
-    return orderClient.get("/orders");
+  async getOrders(page = 0, size = 5) {
+    return orderClient.get(`/orders?page=${page}&size=${size}`);
   },
   async getOrder(id) {
     return orderClient.get(`/orders/${id}`);
@@ -147,14 +147,14 @@ export const InventoryAPI = {
 
 /* ======== WAREHOUSE SERVICE ======== */
 export const WarehouseAPI = {
-  async getInbound() {
-    return warehouseClient.get("/warehouse/inbound");
+  async getInbound(page = 0, size = 5) {
+    return warehouseClient.get(`/warehouse/inbound?page=${page}&size=${size}`);
   },
   async receiveInbound(data) {
     return warehouseClient.post("/warehouse/inbound", data);
   },
-  async getPickingList() {
-    return warehouseClient.get("/warehouse/orders");
+  async getPickingList(page = 0, size = 5) {
+    return warehouseClient.get(`/warehouse/orders?page=${page}&size=${size}`);
   },
   async startPicking(id) {
     return warehouseClient.get(`/warehouse/orders/${id}`);

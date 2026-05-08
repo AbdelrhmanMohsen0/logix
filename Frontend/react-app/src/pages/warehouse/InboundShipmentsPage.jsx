@@ -7,19 +7,21 @@ function InboundShipmentsPage({ searchQuery, onNavigate }) {
   const [loading, setLoading] = React.useState(true);
 
   const [page, setPage] = React.useState(0);
+  const [pageInfo, setPageInfo] = React.useState({ totalElements: 0 });
   const pageSize = 5;
 
   React.useEffect(() => {
-    WarehouseAPI.getInbound()
+    WarehouseAPI.getInbound(page, pageSize)
       .then((data) => {
-        setOrders(data || []);
+        setOrders(data?.content || []);
+        setPageInfo(data?.page || { totalElements: 0 });
         setLoading(false);
       })
       .catch((err) => {
         console.error(err);
         setLoading(false);
       });
-  }, []);
+  }, [page, pageSize]);
 
   const filteredOrders = orders.filter(o => {
     if (!searchQuery) return true;
@@ -29,8 +31,6 @@ function InboundShipmentsPage({ searchQuery, onNavigate }) {
       (o.supplierName && o.supplierName.toLowerCase().includes(q))
     );
   });
-
-  const paginatedOrders = filteredOrders.slice(page * pageSize, (page + 1) * pageSize);
 
   const formatDate = (d) => {
     if (!d) return "—";
@@ -83,7 +83,7 @@ function InboundShipmentsPage({ searchQuery, onNavigate }) {
                   </td>
                 </tr>
               ) : (
-                paginatedOrders.map((o) => (
+                filteredOrders.map((o) => (
                   <tr key={o.shipmentID}>
                     <td className="font-medium" style={{ fontFamily: "monospace", fontSize: "0.8125rem" }}>
                       {o.shipmentID}
@@ -99,8 +99,8 @@ function InboundShipmentsPage({ searchQuery, onNavigate }) {
         </div>
         <Pagination
           currentPage={page}
-          totalPages={Math.ceil(filteredOrders.length / pageSize)}
-          totalElements={filteredOrders.length}
+          totalPages={pageInfo.totalPages || Math.ceil(pageInfo.totalElements / pageSize)}
+          totalElements={pageInfo.totalElements}
           pageSize={pageSize}
           onPageChange={setPage}
         />

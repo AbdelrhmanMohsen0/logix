@@ -8,6 +8,7 @@ function OrderListPage({ searchQuery, onNavigate }) {
   const [error, setError] = React.useState("");
 
   const [page, setPage] = React.useState(0);
+  const [pageInfo, setPageInfo] = React.useState({ totalElements: 0 });
   const pageSize = 5;
 
   React.useEffect(() => {
@@ -15,8 +16,12 @@ function OrderListPage({ searchQuery, onNavigate }) {
     (async () => {
       setLoading(true);
       try {
-        const data = await OrderAPI.getOrders();
-        if (!cancelled) setOrders(data);
+        // NOTE: Order API backend search is technically optional, but let's pass it if supported or filter later
+        const data = await OrderAPI.getOrders(page, pageSize);
+        if (!cancelled) {
+          setOrders(data?.content || []);
+          setPageInfo(data?.page || { totalElements: 0 });
+        }
       } catch (err) {
         if (!cancelled) setError(err.message);
       } finally {
@@ -26,7 +31,7 @@ function OrderListPage({ searchQuery, onNavigate }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [page, pageSize]);
   const statusClass = (s) => (s || "").toLowerCase();
   const formatCurrency = (n) => {
     return new Intl.NumberFormat("en-US", {
@@ -43,6 +48,8 @@ function OrderListPage({ searchQuery, onNavigate }) {
     });
   };
 
+  // Provide a client-side filter fallback, but note that since we only have the current page,
+  // real filtering should occur in the backend API.
   const filteredOrders = orders.filter(o => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
@@ -51,8 +58,6 @@ function OrderListPage({ searchQuery, onNavigate }) {
       (o.customerName && o.customerName.toLowerCase().includes(q))
     );
   });
-
-  const paginatedOrders = filteredOrders.slice(page * pageSize, (page + 1) * pageSize);
 
   return (
     <div>
@@ -157,7 +162,7 @@ function OrderListPage({ searchQuery, onNavigate }) {
                       </td>
                     </tr>
                   ) : (
-                    paginatedOrders.map((o) =>
+                    filteredOrders.map((o) =>
                       <tr key={o.id}>
                         <td
                           className="font-medium"
@@ -209,8 +214,8 @@ function OrderListPage({ searchQuery, onNavigate }) {
             </div>
             <Pagination
               currentPage={page}
-              totalPages={Math.ceil(filteredOrders.length / pageSize)}
-              totalElements={filteredOrders.length}
+              totalPages={pageInfo.totalPages || Math.ceil(pageInfo.totalElements / pageSize)}
+              totalElements={pageInfo.totalElements}
               pageSize={pageSize}
               onPageChange={setPage}
             />

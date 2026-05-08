@@ -13,7 +13,7 @@ function ShipmentsManagementPage({ searchQuery, onNavigate }) {
     setLoading(true);
     WarehouseAPI.getOutbound()
       .then((data) => {
-        setOrders(data || []);
+        setOrders(data?.content || []);
       })
       .catch((err) => {
         console.error(err);

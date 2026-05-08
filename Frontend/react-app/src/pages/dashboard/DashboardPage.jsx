@@ -13,10 +13,10 @@ function DashboardPage({ searchQuery, onNavigate }) {
   const [orders, setOrders] = useState([]);
 
   React.useEffect(() => {
-    OrderAPI.getOrders()
+    OrderAPI.getOrders(0, 5)
       .then(data => {
-        setTotalOrders(data?.length || 0);
-        setOrders((data || []).slice(0, 5));
+        setTotalOrders(data?.page?.totalElements || 0);
+        setOrders(data?.content || []);
       })
       .catch(e => console.warn(e));
       
@@ -29,7 +29,7 @@ function DashboardPage({ searchQuery, onNavigate }) {
       .catch(e => console.warn(e));
       
     WarehouseAPI.getOutbound()
-      .then(data => setPendingShipments(data?.length || 0))
+      .then(data => setPendingShipments(data?.page?.totalElements || 0))
       .catch(e => console.warn(e));
   }, []);
 
