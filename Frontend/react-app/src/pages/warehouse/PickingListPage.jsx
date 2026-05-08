@@ -82,7 +82,7 @@ function PickingListPage({ searchQuery, onNavigate }) {
                 filteredOrders.map((o) => (
                   <tr key={o.orderId}>
                     <td className="font-medium" style={{ fontFamily: "monospace", fontSize: "0.8125rem" }}>
-                      {o.orderId}
+                      {o.orderDisplayIndex || o.orderId}
                     </td>
                     <td>{o.numberOfItems}</td>
                     <td>

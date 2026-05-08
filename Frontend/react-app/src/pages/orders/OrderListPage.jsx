@@ -171,7 +171,7 @@ function OrderListPage({ searchQuery, onNavigate }) {
                             fontFamily: "monospace",
                             fontSize: "0.8125rem",
                           }}>
-                          {o.id}
+                          {o.orderDisplayIndex || o.id}
                         </td>
                         <td className="font-medium">
                           {o.customerName}

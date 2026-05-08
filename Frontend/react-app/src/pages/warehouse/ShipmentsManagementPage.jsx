@@ -83,7 +83,7 @@ function ShipmentsManagementPage({ searchQuery, onNavigate }) {
                 paginatedOrders.map((o) => (
                   <tr key={o.orderId}>
                     <td className="font-medium" style={{ fontFamily: "monospace", fontSize: "0.8125rem" }}>
-                      {o.orderId}
+                      {o.orderDisplayIndex || o.orderId}
                     </td>
                     <td className="font-medium">{o.customerName}</td>
                     <td>{o.customerAddress}</td>
