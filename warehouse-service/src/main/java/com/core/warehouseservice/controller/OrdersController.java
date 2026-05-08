@@ -40,7 +40,8 @@ public class OrdersController {
     @PreAuthorize("hasRole('WORKER')")
     public ResponseEntity<OrderDTO> getOrder(@PathVariable UUID orderId, JwtAuthenticationToken auth) {
         UUID orgId = UUID.fromString(auth.getTokenAttributes().get("org").toString());
-        return ResponseEntity.ok(orderService.getOrderDetails(orderId, orgId));
+        UUID userId = UUID.fromString(auth.getToken().getSubject());
+        return ResponseEntity.ok(orderService.getOrderDetails(orderId, orgId, userId));
     }
 
     @PostMapping("/{orderId}/pack")

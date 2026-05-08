@@ -45,13 +45,15 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderDTO getOrderDetails(UUID orderId, UUID orgId){
+    public OrderDTO getOrderDetails(UUID orderId, UUID orgId, UUID userId){
         Order order = orderRepository.findByIdAndOrganizationIdWithItems(orderId, orgId)
                 .orElseThrow(() -> new OrderNotFoundException("No order found with id: " + orderId));
 
         Instant now = Instant.now();
 
-        if (order.getOrderStatus() == OrderWarehouseStatus.IN_PROGRESS &&
+        if (order.getLockedByUserId() != null &&
+                !order.getLockedByUserId().equals(userId) &&
+                order.getOrderStatus() == OrderWarehouseStatus.IN_PROGRESS &&
                 order.getLockExpiryTime() != null &&
                 order.getLockExpiryTime().isAfter(now)) {
             throw new OrderLockedException("Order is currently locked and being processed by another worker.");
@@ -59,6 +61,7 @@ public class OrderService {
 
         order.setOrderStatus(OrderWarehouseStatus.IN_PROGRESS);
         order.setLockExpiryTime(now.plus(PICKING_ORDER_LOCK_DURATION_MINUTES, ChronoUnit.MINUTES));
+        order.setLockedByUserId(userId);
         orderRepository.save(order);
         snsPublisherService.publishOrderStatusEvent(new OrderStatusUpdateDTO(order.getId(), OrderStatus.PROCESSING));
 

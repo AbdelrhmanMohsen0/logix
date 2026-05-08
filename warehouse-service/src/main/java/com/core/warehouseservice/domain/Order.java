@@ -12,7 +12,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "orders", indexes = {
-        @Index(name = "idx_order_stale_locks", columnList = "organization_id, order_status, lock_expiry_time")
+        @Index(name = "idx_order_stale_locks", columnList = "organization_id, order_status, lock_expiry_time, locked_by_user_id")
 })
 @Getter
 @Setter
@@ -58,5 +58,8 @@ public class Order {
 
     @Column
     private Instant lockExpiryTime;
+
+    @Column
+    private UUID lockedByUserId;
 
 }
