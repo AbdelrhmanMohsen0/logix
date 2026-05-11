@@ -22,7 +22,7 @@ public class SNSPublisherService {
 
 	public void publishOrderStatusEvent(OrderStatusUpdateDTO orderStatusEvent) {
 		Map<String, Object> headers = Map.of(
-				SnsHeaders.MESSAGE_GROUP_ID_HEADER, orderStatusEvent.orderId().toString(),
+				SnsHeaders.MESSAGE_GROUP_ID_HEADER, UUID.randomUUID().toString(),
 				SnsHeaders.MESSAGE_DEDUPLICATION_ID_HEADER, UUID.randomUUID().toString()
 		);
 		snsTemplate.convertAndSend(orderStatusTopicARN, orderStatusEvent, headers);

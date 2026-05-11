@@ -21,7 +21,7 @@ public class SNSPublisherService {
 
 	public void publishOrderCreatedEvent(OrderDTO orderCreatedEvent, UUID orgId) {
 		Map<String, Object> headers = Map.of(
-				SnsHeaders.MESSAGE_GROUP_ID_HEADER, orderCreatedEvent.orderId().toString(),
+				SnsHeaders.MESSAGE_GROUP_ID_HEADER, UUID.randomUUID().toString(),
 				SnsHeaders.MESSAGE_DEDUPLICATION_ID_HEADER, UUID.randomUUID().toString(),
 				"orgId", orgId.toString()
 		);

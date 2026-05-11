@@ -22,7 +22,7 @@ public class SNSPublisherService {
 
 	public void publishOrderStatusEvent(OrderStatusUpdateDTO orderStatusEvent) {
 		Map<String, Object> headers = Map.of(
-				SnsHeaders.MESSAGE_GROUP_ID_HEADER, orderStatusEvent.orderId().toString(),
+				SnsHeaders.MESSAGE_GROUP_ID_HEADER, UUID.randomUUID().toString(),
 				SnsHeaders.MESSAGE_DEDUPLICATION_ID_HEADER, UUID.randomUUID().toString()
 		);
 		snsTemplate.convertAndSend(orderStatusTopicARN, orderStatusEvent, headers);
@@ -33,7 +33,7 @@ public class SNSPublisherService {
 	
 	public void publishInventoryAllocatedEvent(ConfirmedOrderDTO confirmedOrder) {
 		Map<String, Object> headers = Map.of(
-				SnsHeaders.MESSAGE_GROUP_ID_HEADER, confirmedOrder.orderId().toString(),
+				SnsHeaders.MESSAGE_GROUP_ID_HEADER, UUID.randomUUID().toString(),
 				SnsHeaders.MESSAGE_DEDUPLICATION_ID_HEADER, UUID.randomUUID().toString(),
 				"eventType", "INVENTORY_ALLOCATED"
 		);
@@ -45,7 +45,7 @@ public class SNSPublisherService {
 	
 	public void publishShipmentReceivedEvent(ShipmentReceivedDTO shipmentReceived) {
 		Map<String, Object> headers = Map.of(
-				SnsHeaders.MESSAGE_GROUP_ID_HEADER, UUID.randomUUID() + "-" + shipmentReceived.shipmentID(),
+				SnsHeaders.MESSAGE_GROUP_ID_HEADER, UUID.randomUUID().toString(),
 				SnsHeaders.MESSAGE_DEDUPLICATION_ID_HEADER, UUID.randomUUID().toString(),
 				"eventType", "SHIPMENT_RECEIVED"
 		);
