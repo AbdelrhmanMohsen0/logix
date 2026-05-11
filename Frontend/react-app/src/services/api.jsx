@@ -1,9 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_AUTH = "http://127.0.0.1:8081";
-const API_BASE_ORDER = "http://127.0.0.1:8082";
-const API_BASE_INVENTORY = "http://127.0.0.1:8083";
-const API_BASE_WAREHOUSE = "http://127.0.0.1:8084";
+const API_BASE_URL = "http://logix-alb-1374867690.eu-central-1.elb.amazonaws.com";
 
 /* -------- Token helpers -------- */
 export const TokenService = {
@@ -57,10 +54,10 @@ const createClient = (baseURL) => {
   return client;
 };
 
-const authClient = createClient(API_BASE_AUTH);
-const orderClient = createClient(API_BASE_ORDER);
-const inventoryClient = createClient(API_BASE_INVENTORY);
-const warehouseClient = createClient(API_BASE_WAREHOUSE);
+const authClient = createClient(API_BASE_URL);
+const orderClient = createClient(API_BASE_URL);
+const inventoryClient = createClient(API_BASE_URL);
+const warehouseClient = createClient(API_BASE_URL);
 
 // Special interceptor for services requiring Organization ID
 orderClient.interceptors.request.use((config) => {
