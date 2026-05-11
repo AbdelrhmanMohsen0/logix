@@ -104,7 +104,7 @@ function PickingListPage({ searchQuery, onNavigate }) {
                       {o.orderWarehouseStatus === "IN_PROGRESS" && (
                         <button
                           className="btn-ghost"
-                          onClick={() => onNavigate("picking-details:" + o.orderId)}
+                          onClick={() => handleStartWork(o.orderId)}
                           title="Continue Picking">
                           <span className="material-symbols-outlined" style={{ fontSize: "1.125rem" }}>
                             checklist

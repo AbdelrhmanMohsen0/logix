@@ -40,15 +40,15 @@ function UserListPage({ searchQuery, onNavigate }) {
   
   const currentRole = roleLabel(user?.role);
   const canEdit = (u) => {
-    const targetRole = roleLabel(u.role);
-    if (currentRole === "OWNER") return true;
-    if (currentRole === "ADMIN") {
-      if (targetRole === "OWNER") return false;
-      if (targetRole === "ADMIN" && u.id !== user?.id) return false;
-      return true;
-    }
-    return false;
-  };
+      const targetRole = roleLabel(u.role);
+      if (currentRole === "OWNER") return true;
+      if (currentRole === "ADMIN") {
+        if (targetRole === "OWNER") return false;
+        if (targetRole === "ADMIN") return false;
+        return true;
+      }
+      return false;
+    };
 
   const canDelete = (u) => {
     if (u.id === user?.id) return false;
