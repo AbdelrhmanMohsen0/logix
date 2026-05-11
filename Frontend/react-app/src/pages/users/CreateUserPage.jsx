@@ -66,6 +66,7 @@ function CreateUserPage({ onNavigate }) {
       <div
         className="card"
         style={{
+          maxWidth: "560px",
           padding: "2rem",
         }}>
         {error &&
