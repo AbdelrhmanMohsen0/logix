@@ -32,8 +32,7 @@ const checkAccess = (user, page) => {
   // Worker: only warehouse (no dashboard)
   if (role === 'ROLE_WORKER') {
     const allowed = [
-      'warehouse-operations', 'inbound-shipments',
-      'add-received-shipment', 'picking-lists', 'picking-details',
+      'warehouse-operations', 'picking-lists', 'picking-details',
       'picking-management', 'shipments', 'create-shipment',
       'warehouse-zones',
     ];

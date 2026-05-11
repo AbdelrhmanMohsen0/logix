@@ -82,12 +82,13 @@ function EditUserPage({ userId, onNavigate }) {
       setSaving(false);
     }
   };
-  const roles = [
-    "ADMIN",
-    "MANAGER",
-    "SALES",
-    "WORKER",
-  ];
+const currentRole = (currentUser?.role || '').replace('ROLE_', '');
+const roles = [
+  ...(currentRole === "OWNER" ? ["ADMIN"] : []),
+  "MANAGER",
+  "SALES",
+  "WORKER",
+];
   const isOwner = original?.role === "OWNER" || original?.role === "ROLE_OWNER";
   const isSelf = original?.id === currentUser?.id;
   const isRoleSelectDisabled = isOwner || isSelf;

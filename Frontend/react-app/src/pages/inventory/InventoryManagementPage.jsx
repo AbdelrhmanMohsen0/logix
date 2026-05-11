@@ -7,7 +7,7 @@ function InventoryManagementPage({ searchQuery, routeParam, onNavigate }) {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [pageInfo, setPageInfo] = useState({ totalElements: 0, totalPages: 0, size: 10 });
-  const [stockFilter, setStockFilter] = useState("ALL");
+  const [stockFilter, setStockFilter] = useState(routeParam === "lowstock" ? "LOW_STOCK" : "ALL");
   const [localFilter, setLocalFilter] = useState("");
 
   // Debounce the global search bar (400ms)
@@ -40,7 +40,7 @@ function InventoryManagementPage({ searchQuery, routeParam, onNavigate }) {
   const fetchItems = useCallback(async () => {
     setLoading(true);
     try {
-      const filter = routeParam === "lowstock" ? "LOW_STOCK" : stockFilter;
+      const filter = stockFilter;
       // localFilter (in-page search) takes priority; fall back to global searchQuery
       const query = debouncedLocalFilter || debouncedQuery || "";
       const data = await InventoryAPI.getProducts(page, 5, filter, query);
@@ -57,9 +57,6 @@ function InventoryManagementPage({ searchQuery, routeParam, onNavigate }) {
     fetchItems();
   }, [fetchItems]);
 
-  useEffect(() => {
-    setPage(0);
-  }, [stockFilter, debouncedLocalFilter, debouncedQuery]);
 
   const handleAddChange = (e) => {
     setAddForm(f => ({ ...f, [e.target.name]: e.target.value }));
