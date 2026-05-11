@@ -1,7 +1,8 @@
 import React from 'react';
+import { useAuth } from '../../context/AuthContext';
 
 function WarehouseOperationsPage({ onNavigate }) {
-  
+   const { hasAccess } = useAuth();
   return (
     <div>
       <div className="page-header" style={{ marginBottom: "2.5rem" }}>
@@ -20,21 +21,23 @@ function WarehouseOperationsPage({ onNavigate }) {
           gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
           gap: "2rem",
         }}>
-        <div
-          className="card module-card"
-          onClick={() => onNavigate("inbound-shipments")}>
-          <div className="icon-container">
-            <span className="material-symbols-outlined">
-              input
-            </span>
+        {hasAccess("inbound-shipments") && (
+          <div
+            className="card module-card"
+            onClick={() => onNavigate("inbound-shipments")}>
+            <div className="icon-container">
+              <span className="material-symbols-outlined">
+                input
+              </span>
+            </div>
+            <h3 style={{ fontSize: "1.5rem", fontWeight: "700" }}>
+              Inbound
+            </h3>
+            <p>
+              Receive and stock items
+            </p>
           </div>
-          <h3 style={{ fontSize: "1.5rem", fontWeight: "700" }}>
-            Inbound
-          </h3>
-          <p>
-            Receive and stock items
-          </p>
-        </div>
+        )}
         <div className="card module-card" onClick={() => onNavigate("picking-lists")}>
           <div className="icon-container">
             <span className="material-symbols-outlined">
