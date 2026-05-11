@@ -1,8 +1,11 @@
 import React from 'react';
 import { AuthAPI, UserAPI, OrderAPI, TokenService } from '../../services/api';
 import { validatePassword, PasswordRequirements } from '../../utils/passwordValidation';
+import { useAuth } from '../../context/AuthContext';
 
 function CreateUserPage({ onNavigate }) {
+  const { user } = useAuth();
+  const currentRole = (user?.role || '').replace('ROLE_', '');
   const [form, setForm] = React.useState({
     name: "",
     email: "",
@@ -45,7 +48,7 @@ function CreateUserPage({ onNavigate }) {
     }
   };
   const roles = [
-    "ROLE_ADMIN",
+    ...(currentRole === "OWNER" ? ["ROLE_ADMIN"] : []),
     "ROLE_MANAGER",
     "ROLE_SALES",
     "ROLE_WORKER",

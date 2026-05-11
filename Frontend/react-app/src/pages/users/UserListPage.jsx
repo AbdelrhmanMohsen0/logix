@@ -37,6 +37,27 @@ function UserListPage({ searchQuery, onNavigate }) {
     }
   }, [successMsg]);
   const roleLabel = (role) => (role || "").replace("ROLE_", "");
+  
+  const currentRole = roleLabel(user?.role);
+  const canEdit = (u) => {
+    const targetRole = roleLabel(u.role);
+    if (currentRole === "OWNER") return true;
+    if (currentRole === "ADMIN") {
+      if (targetRole === "OWNER") return false;
+      if (targetRole === "ADMIN" && u.id !== user?.id) return false;
+      return true;
+    }
+    return false;
+  };
+
+  const canDelete = (u) => {
+    if (u.id === user?.id) return false;
+    const targetRole = roleLabel(u.role);
+    if (targetRole === "OWNER") return false;
+    if (currentRole === "ADMIN" && targetRole === "ADMIN") return false;
+    return currentRole === "OWNER" || currentRole === "ADMIN";
+  };
+
   const handleDelete = async () => {
     if (!deleteId) return;
     setDeleteLoading(true);
@@ -61,8 +82,11 @@ function UserListPage({ searchQuery, onNavigate }) {
     );
   });
 
-  const paginatedUsers = filteredUsers.slice(page * pageSize, (page + 1) * pageSize);
-
+  const sortedUsers = [
+  ...filteredUsers.filter(u => String(u.id) === String(user?.id)),
+  ...filteredUsers.filter(u => String(u.id) !== String(user?.id)),
+];
+const paginatedUsers = sortedUsers.slice(page * pageSize, (page + 1) * pageSize);
   return (
     <div>
       <div className="page-header">
@@ -188,22 +212,24 @@ function UserListPage({ searchQuery, onNavigate }) {
                           style={{
                             textAlign: "right",
                           }}>
-                          <button
-                            className="btn-ghost"
-                            style={{
-                              padding: "0.25rem",
-                            }}
-                            onClick={() => onNavigate("edit-user:" + u.id)}
-                            title="Edit user">
-                            <span
-                              className="material-symbols-outlined"
+                          {canEdit(u) && (
+                            <button
+                              className="btn-ghost"
                               style={{
-                                fontSize: "1.125rem",
-                              }}>
-                              edit
-                            </span>
-                          </button>
-                          {u.role !== 'ROLE_OWNER' && u.role !== 'OWNER' && u.id !== user?.id && (
+                                padding: "0.25rem",
+                              }}
+                              onClick={() => onNavigate("edit-user:" + u.id)}
+                              title="Edit user">
+                              <span
+                                className="material-symbols-outlined"
+                                style={{
+                                  fontSize: "1.125rem",
+                                }}>
+                                edit
+                              </span>
+                            </button>
+                          )}
+                          {canDelete(u) && (
                             <button
                               className="btn-ghost"
                               style={{
