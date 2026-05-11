@@ -18,7 +18,7 @@ function WarehouseOperationsPage({ onNavigate }) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(350px, 400px))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 370px))",
           gap: "2rem",
         }}>
         {hasAccess("inbound-shipments") && (
