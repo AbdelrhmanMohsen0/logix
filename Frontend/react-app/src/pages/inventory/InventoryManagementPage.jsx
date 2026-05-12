@@ -92,7 +92,7 @@ function InventoryManagementPage({ searchQuery, routeParam, onNavigate }) {
       quantity: item.quantity,
       price: item.price,
       location: item.location,
-      threshold: 20,
+      threshold: item.threshold || 20,
     });
     setOpenMenu(null);
   };
@@ -308,9 +308,15 @@ function InventoryManagementPage({ searchQuery, routeParam, onNavigate }) {
                 <input className="form-input" type="number" step="0.01" name="price" placeholder="0.00" value={addForm.price} onChange={handleAddChange} />
               </div>
             </div>
-            <div className="form-group">
-              <label>Location</label>
-              <input className="form-input" name="location" placeholder="e.g. Zone A - Shelf 12" value={addForm.location} onChange={handleAddChange} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div className="form-group">
+                <label>Location</label>
+                <input className="form-input" name="location" placeholder="e.g. Zone A - Shelf 12" value={addForm.location} onChange={handleAddChange} />
+              </div>
+              <div className="form-group">
+                <label>Low Stock Threshold</label>
+                <input className="form-input" type="number" name="threshold" placeholder="20" value={addForm.threshold} onChange={handleAddChange} />
+              </div>
             </div>
             <div className="modal-actions" style={{ marginTop: "1.5rem" }}>
               <button className="btn btn-secondary btn-sm" onClick={() => setShowAddModal(false)}>Cancel</button>
@@ -345,9 +351,15 @@ function InventoryManagementPage({ searchQuery, routeParam, onNavigate }) {
                 <input className="form-input" type="number" step="0.01" name="price" value={editForm.price} onChange={handleEditChange} />
               </div>
             </div>
-            <div className="form-group">
-              <label>Location</label>
-              <input className="form-input" name="location" value={editForm.location} onChange={handleEditChange} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div className="form-group">
+                <label>Location</label>
+                <input className="form-input" name="location" value={editForm.location} onChange={handleEditChange} />
+              </div>
+              <div className="form-group">
+                <label>Low Stock Threshold</label>
+                <input className="form-input" type="number" name="threshold" value={editForm.threshold} onChange={handleEditChange} />
+              </div>
             </div>
             <div className="modal-actions" style={{ marginTop: '1.5rem' }}>
               <button className="btn btn-secondary btn-sm" onClick={() => setEditingItem(null)}>Cancel</button>
