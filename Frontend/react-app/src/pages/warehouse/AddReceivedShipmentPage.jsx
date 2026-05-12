@@ -10,7 +10,29 @@ function AddReceivedShipmentPage({ onNavigate }) {
     sku: "",
     qty: 1,
   });
+  const [skuSearchResults, setSkuSearchResults] = React.useState([]);
+  const [showSkuDropdown, setShowSkuDropdown] = React.useState(false);
   const [editIndex, setEditIndex] = React.useState(null);
+
+  React.useEffect(() => {
+    const fetchSkus = async () => {
+      if (!modalForm.sku || modalForm.sku.trim().length < 1) {
+        setSkuSearchResults([]);
+        return;
+      }
+      try {
+        const results = await InventoryAPI.searchProducts(modalForm.sku);
+        setSkuSearchResults(Array.isArray(results) ? results : []);
+      } catch (e) {
+        console.error("SKU Search Error:", e);
+      }
+    };
+    
+    if (showSkuDropdown) {
+      const timer = setTimeout(fetchSkus, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [modalForm.sku, showSkuDropdown]);
   const [formError, setFormError] = React.useState("");
   const [modalError, setModalError] = React.useState("");
   const [successMsg, setSuccessMsg] = React.useState("");
@@ -82,6 +104,8 @@ function AddReceivedShipmentPage({ onNavigate }) {
   const openNewItemModal = () => {
     setEditIndex(null);
     setModalForm({ sku: "", qty: 1 });
+    setShowSkuDropdown(false);
+    setSkuSearchResults([]);
     setShowModal(true);
   };
   return (
@@ -288,7 +312,7 @@ function AddReceivedShipmentPage({ onNavigate }) {
                 {modalError}
               </div>
             )}
-            <div className="form-group" style={{ marginBottom: "1.5rem" }}>
+            <div className="form-group" style={{ marginBottom: "1.5rem", position: "relative" }}>
               <label style={{ fontWeight: "600", color: "var(--on-surface)" }}>
                 SKU
               </label>
@@ -296,11 +320,55 @@ function AddReceivedShipmentPage({ onNavigate }) {
                 className="form-input"
                 style={{ background: "#fcfbfe" }}
                 type="text"
-                placeholder="e.g. BAT-2023-HC"
+                placeholder="Search SKU... e.g. BAT-2023-HC"
                 required={true}
                 value={modalForm.sku}
-                onChange={(e) =>
-                  setModalForm({ ...modalForm, sku: e.target.value })} />
+                onFocus={() => setShowSkuDropdown(true)}
+                onBlur={() => setTimeout(() => setShowSkuDropdown(false), 200)}
+                onChange={(e) => {
+                  setModalForm({ ...modalForm, sku: e.target.value });
+                  setShowSkuDropdown(true);
+                }} />
+              {showSkuDropdown && skuSearchResults.length > 0 && (
+                <ul
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    left: 0,
+                    right: 0,
+                    margin: 0,
+                    padding: 0,
+                    listStyle: "none",
+                    background: "var(--surface-container-low)",
+                    border: "1px solid var(--outline)",
+                    borderRadius: "0.25rem",
+                    boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                    maxHeight: "150px",
+                    overflowY: "auto",
+                    zIndex: 1000
+                  }}>
+                  {skuSearchResults.map((prod, idx) => (
+                    <li
+                      key={idx}
+                      style={{
+                        padding: "0.5rem 1rem",
+                        cursor: "pointer",
+                        borderBottom: idx === skuSearchResults.length - 1 ? "none" : "1px solid var(--outline-variant)",
+                        color: "var(--on-surface)",
+                        display: "flex",
+                        flexDirection: "column"
+                      }}
+                      onMouseDown={(e) => {
+                        e.preventDefault(); 
+                        setModalForm({ ...modalForm, sku: prod.sku });
+                        setShowSkuDropdown(false);
+                      }}>
+                      <span style={{ fontWeight: "600", fontFamily: "monospace" }}>{prod.sku}</span>
+                      <span style={{ fontSize: "0.875rem", color: "var(--on-surface-variant)" }}>{prod.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
             <div className="form-group" style={{ marginBottom: "2rem" }}>
               <label style={{ fontWeight: "600", color: "var(--on-surface)" }}>
