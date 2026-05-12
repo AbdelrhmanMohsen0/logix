@@ -58,28 +58,8 @@ function Navigation({ currentRoute, onNavigate, isOpen }) {
             </a>
           </li>,
         )}
-        <li
-          style={{
-            padding: "0.5rem 1rem",
-          }}>
-          <div
-            className="divider"
-            style={{
-              margin: "0.5rem 0",
-            }} />
-        </li>
-        <li className="nav-item">
-          <button onClick={handleLogout}>
-            <span className="material-symbols-outlined">
-              logout
-            </span>
-            <span>
-              Logout
-            </span>
-          </button>
-        </li>
       </ul>
-      <div className="sidebar-profile">
+      <div className="sidebar-profile" style={{ marginBottom: "0.5rem" }}>
         <div className="sidebar-profile-avatar">
           {initials}
         </div>
@@ -91,6 +71,38 @@ function Navigation({ currentRoute, onNavigate, isOpen }) {
             {roleName || "Member"}
           </p>
         </div>
+      </div>
+      <div style={{ padding: "0 1rem" }}>
+        <button
+          onClick={handleLogout}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.75rem",
+            width: "100%",
+            padding: "0.75rem 1rem",
+            border: "none",
+            borderRadius: "0.5rem",
+            background: "transparent",
+            color: "var(--error)",
+            fontSize: "0.875rem",
+            fontWeight: "600",
+            cursor: "pointer",
+            fontFamily: "inherit",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(186, 26, 26, 0.1)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+          }}>
+          <span className="material-symbols-outlined" style={{ fontSize: "1.25rem" }}>
+            logout
+          </span>
+          <span>
+            Logout
+          </span>
+        </button>
       </div>
     </nav>
   );
