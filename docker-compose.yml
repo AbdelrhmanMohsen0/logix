@@ -138,6 +138,13 @@ services:
     ports:
       - "8084:8080"
 
+  # APP FRONTEND
+  app-frontend:
+    build: ./app-frontend
+    container_name: app-frontend
+    ports:
+      - "5173:80"
+
 volumes:
   auth_data:
   order_data:
