@@ -52,7 +52,7 @@ To run the entire application stack using Docker Compose:
 docker-compose up --build
 ```
 
-This will spin up all the backend services along with their respective PostgreSQL databases.
+This will spin up the frontend, all the backend services, and their respective PostgreSQL databases.
 
 ### Service Ports
 
@@ -60,19 +60,8 @@ This will spin up all the backend services along with their respective PostgreSQ
 
 When running locally via Docker Compose, the services are mapped to the following ports:
 
+- **Frontend**: `http://localhost:5173`
 - **Auth Service**: `http://localhost:8081`
 - **Order Service**: `http://localhost:8082`
 - **Inventory Service**: `http://localhost:8083`
 - **Warehouse Service**: `http://localhost:8084`
-
-### Running the Frontend
-
-Navigate to the `frontend` directory:
-
-```sh
-cd frontend
-npm install
-npm run dev
-```
-
-The frontend will start on `http://localhost:5173`.
